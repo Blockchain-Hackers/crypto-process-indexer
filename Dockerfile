@@ -17,7 +17,7 @@ RUN yarn
 COPY . .
 
 # Build
-RUN yarn build
+# RUN yarn build
 
 # Copy the rest of the application code into the container
 COPY . .
