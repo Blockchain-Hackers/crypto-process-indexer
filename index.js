@@ -110,18 +110,8 @@ async function subscribeToNewBlocks() {
     return;
   }
   console.log("latestBlockNumber:", String(latestBlockNumber));
-  //   web3.eth.subscribe("newBlockHeaders", (error, blockHeader) => {
-  //     if (error) {
-  //       console.error("Error:", error);
-  //     } else {
-  //       console.log("New block header:", blockHeader);
   getAllEventsInBlock(_latestBlockNumber);
   latestBlockNumber = _latestBlockNumber;
-  // }
-  //   });
-  // .on("error", (error) => {
-  //   console.error("Subscription error:", error);
-  // });
 }
 
 // Get all events in a given block for specified contract addresses
@@ -140,8 +130,8 @@ async function getAllEventsInBlock(blockNumber) {
         console.log("new transaction on contract", transaction.to);
         console.log("transaction", transaction);
         web3.eth.getTransactionReceipt(transaction.hash).then((receipt) => {
-            let logs = receipt.logs;
-            console.log("logs", logs);
+          let logs = receipt.logs;
+          console.log("logs", logs);
           logs.forEach((log) => {
             const contract = contracts.find(
               (c) =>
@@ -195,64 +185,13 @@ function run() {
 
 run();
 
-// const Web3 = require('web3');
-
-// // Set up the HTTP RPC endpoint
-// const rpcEndpoint = 'http://localhost:8545'; // Replace with your RPC endpoint URL
-
-// Create a new web3 instance
-// const web3 = new Web3(rpcEndpoint);
-
-// // Define the last scanned block variable
-// let lastScannedBlock = 0;
-
-// // Define the polling function
-// async function pollRPC() {
-//   try {
-//     // Get the latest block number
-//     const latestBlockNumber = await web3.eth.getBlockNumber();
-
-//     // Define the event contract and ABI
-//     const contractAddress = '0x1234567890'; // Replace with your contract address
-//     const contractABI = [{
-//       "anonymous": false,
-//       "inputs": [
-//         {
-//           "indexed": false,
-//           "name": "param1",
-//           "type": "uint256"
-//         },
-//         {
-//           "indexed": false,
-//           "name": "param2",
-//           "type": "string"
-//         }
-//       ],
-//       "name": "EventName",
-//       "type": "event"
-//     }]; // Replace with your contract's event ABI
-
-//     // Create an instance of the contract
-//     const contract = new web3.eth.Contract(contractABI, contractAddress);
-
-//     // Fetch events from the last scanned block + 1 to the latest block
-//     const events = await contract.getPastEvents('EventName', {
-//       fromBlock: lastScannedBlock + 1,
-//       toBlock: latestBlockNumber
-//     });
-
-//     // Process the events
-//     events.forEach((event) => {
-//       console.log('Event:', event.returnValues);
-//       // Process the event data as needed
-//     });
-
-//     // Update the last scanned block
-//     lastScannedBlock = latestBlockNumber;
-//   } catch (error) {
-//     console.error('Error occurred while polling RPC:', error);
-//   }
-// }
-
-// // Set an interval to poll the RPC every 5 seconds
-// setInterval(pollRPC, 5000);
+// do a small express server on port 8080
+const express = require("express");
+const app = express();
+const port = 8080;
+app.get("/", (req, res) => {
+  res.send("Hello World!");
+});
+app.listen(port, () => {
+  console.log(`Example app listening at http://localhost:${port}`);
+});
