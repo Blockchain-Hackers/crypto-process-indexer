@@ -29,7 +29,7 @@ var contractAbi = `[{"inputs":[{"internalType":"string","name":"_greeting","type
 var contractAbis = map[string]*abi.ABI{}
 
 func main() {
-	resp := callFunc("transfer", functions.ProcessFunctionParams{
+	resp, _ := callFunc("transfer", functions.ProcessFunctionParams{
 		FunctionName: "transfer",
 		Parameters: map[string]interface{}{
 			"to":         "0x84188bc94B497131d0Ee2Cf7C154b22357c25208",
@@ -37,7 +37,6 @@ func main() {
 			"privateKey": "6e1b485777de659f004d1133e422def4be77d0346716e65278a369c9eb9d544b",
 		}})
 	fmt.Printf("Response: %+v\n", resp.Value)
-
 
 	// Initialize Ethereum client
 	client, err := ethclient.Dial(infuraURL)
@@ -53,7 +52,7 @@ func main() {
 
 	// Create contract instances
 	contracts := make([]*abi.ABI, len(contractAddresses))
-	for i, _ := range contractAddresses {
+	for i := range contractAddresses {
 		// contractAddress := common.HexToAddress(address)
 		contractAbi, err := abi.JSON(strings.NewReader(contractAbi))
 		if err != nil {

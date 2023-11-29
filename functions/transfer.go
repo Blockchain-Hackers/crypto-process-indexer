@@ -12,7 +12,7 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func transfer(params ProcessFunctionParams) (ProcessFunctionResponse, ProcessFunctionError) {
+func Transfer(params ProcessFunctionParams) (ProcessFunctionResponse, ProcessFunctionError) {
 	const infuraURL = "https://sepolia.infura.io/v3/927b0bef549145fba75661d347f23b8a"
 	requiredParams := []string{"amount", "privateKey", "to"}
 	for _, param := range requiredParams {

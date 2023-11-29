@@ -5,10 +5,9 @@ import (
 	"github.com/blockchain-hackers/indexer/functions"
 )
 
-func callFunc(functionName string, param functions.ProcessFunctionParams) functions.ProcessFunctionResponse {
-	var maps = map[string]func(_param functions.ProcessFunctionParams) functions.ProcessFunctionResponse {
-		// "function1": function1,
-		// "function2": function2,
+func callFunc(functionName string, param functions.ProcessFunctionParams) (functions.ProcessFunctionResponse, functions.ProcessFunctionError) {
+	var maps = map[string]func(_param functions.ProcessFunctionParams) (functions.ProcessFunctionResponse, functions.ProcessFunctionError) {
+		"Transfer": functions.Transfer,
 	}
 
 	if val, ok := maps[functionName]; ok {
@@ -18,5 +17,5 @@ func callFunc(functionName string, param functions.ProcessFunctionParams) functi
 	return functions.ProcessFunctionResponse{
 		FunctionName: functionName,
 		Value:        "",
-	}
+	}, functions.ProcessFunctionError{}
 }
