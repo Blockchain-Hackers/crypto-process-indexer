@@ -1,4 +1,4 @@
-module github.com/blockchain-hackers/crypto-process-indexer
+module github.com/blockchain-hackers/indexer
 
 go 1.19
 
