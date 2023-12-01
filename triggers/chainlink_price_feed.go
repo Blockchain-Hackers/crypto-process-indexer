@@ -1,5 +1,5 @@
-// package triggers
-package main
+package triggers
+// package main
 
 import (
 	"context"
@@ -73,7 +73,7 @@ var ChainlinkContractABI = `[
 	}
 ]`
 
-const infuraURL = "wss://sepolia.infura.io/ws/v3/927b0bef549145fba75661d347f23b8a"
+// const infuraURL = "wss://sepolia.infura.io/ws/v3/927b0bef549145fba75661d347f23b8a"
 
 // run triggers
 func (trigger *ChainlinkPriceFeed) run() {
@@ -139,7 +139,7 @@ func getLatestPrice(pair string) (*ChainlinkLatestRoundData, error) {
 	return &answer2, nil
 }
 
-func main() {
-	trigger := &ChainlinkPriceFeed{}
-	trigger.run()
-}
+// func main() {
+// 	trigger := &ChainlinkPriceFeed{}
+// 	trigger.run()
+// }
