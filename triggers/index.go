@@ -9,6 +9,7 @@ type Trigger interface {
 
 var triggers = []Trigger{
 	&EthSepoliaIndexer{},
+	&ChainlinkPriceFeed{},
 }
 
 // run triggers
