@@ -8,13 +8,13 @@ type Trigger interface {
 }
 
 var triggers = []Trigger{
-	&EthSepoliaIndexer{},
 	&ChainlinkPriceFeed{},
+	&EthSepoliaIndexer{},
 }
 
 // run triggers
 func Run() {
 	for _, trigger := range triggers {
-		trigger.run()
+		go trigger.run()
 	}
 }
