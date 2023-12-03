@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/blockchain-hackers/indexer/functions"
+	"github.com/blockchain-hackers/indexer/triggers"
 	// "github.com/ethereum/go-ethereum/common"
 )
 
@@ -18,6 +19,7 @@ func main() {
 			"privateKey": "6e1b485777de659f004d1133e422def4be77d0346716e65278a369c9eb9d544b",
 		}})
 	fmt.Printf("Response: %+v\n", resp.Value)
+	triggers.Run()
 
 	// Simple HTTP server
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
