@@ -106,7 +106,7 @@ func (v EthSepoliaIndexer) run() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	defer client.Close()
+	// defer client.Close()
 
 	// map contract addresses to lower case
 	for i := range contractAddresses {
