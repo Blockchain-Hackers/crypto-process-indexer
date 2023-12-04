@@ -1,18 +1,17 @@
-package main
+package triggers
 
 import (
 	"context"
 	"fmt"
 	"log"
 	"math/big"
-	"net/http"
 	"strings"
 	"time"
 
 	"github.com/ethereum/go-ethereum/accounts/abi"
-
-	// "github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/ethclient"
+	// "fmt"
+	// "github.com/blockchain-hackers/indexer"
 )
 
 // Replace 'YOUR_GOERLI_INFURA_API_KEY' with your Infura API key or use your own Ethereum node
@@ -27,60 +26,8 @@ var contractAbi = `[{"inputs":[{"internalType":"string","name":"_greeting","type
 // create a map from contract address to contract ABI
 var contractAbis = map[string]*abi.ABI{}
 
-func main() {
-	// Initialize Ethereum client
-	client, err := ethclient.Dial(infuraURL)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer client.Close()
+type EthSepoliaIndexer struct {
 
-	// map contract addresses to lower case
-	for i := range contractAddresses {
-		contractAddresses[i] = strings.ToLower(contractAddresses[i])
-	}
-
-	// Create contract instances
-	contracts := make([]*abi.ABI, len(contractAddresses))
-	for i, _ := range contractAddresses {
-		// contractAddress := common.HexToAddress(address)
-		contractAbi, err := abi.JSON(strings.NewReader(contractAbi))
-		if err != nil {
-			log.Fatal(err)
-		}
-		contracts[i] = &contractAbi
-		contractAbis[contractAddresses[i]] = &contractAbi
-	}
-
-	latestBlockNumber := uint64(0)
-
-	// Subscribe to new block headers
-	go func() {
-		for {
-			latestBlock, err := client.BlockByNumber(context.Background(), nil)
-			if err != nil {
-				log.Printf("Error getting latest block number: %v", err)
-				time.Sleep(5 * time.Second)
-				continue
-			}
-
-			if latestBlock.NumberU64() > latestBlockNumber {
-				fmt.Printf("Latest block number: %d\n", latestBlock.NumberU64())
-				getAllEventsInBlock(client, contracts, latestBlock.NumberU64())
-				latestBlockNumber = latestBlock.NumberU64()
-			}
-
-			time.Sleep(5 * time.Second)
-		}
-	}()
-
-	// Simple HTTP server
-	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Fprintf(w, "Hello, Hacker!")
-	})
-
-	// Start the HTTP server
-	log.Fatal(http.ListenAndServe(":8080", nil))
 }
 
 // Get all events in a given block for specified contract addresses
@@ -151,4 +98,52 @@ func findContract(contracts []*abi.ABI, address string) *abi.ABI {
 		return contract
 	}
 	return nil
+}
+
+func (v EthSepoliaIndexer) run() {
+	// Initialize Ethereum client
+	client, err := ethclient.Dial(infuraURL)
+	if err != nil {
+		log.Fatal(err)
+	}
+	// defer client.Close()
+
+	// map contract addresses to lower case
+	for i := range contractAddresses {
+		contractAddresses[i] = strings.ToLower(contractAddresses[i])
+	}
+
+	// Create contract instances
+	contracts := make([]*abi.ABI, len(contractAddresses))
+	for i := range contractAddresses {
+		// contractAddress := common.HexToAddress(address)
+		contractAbi, err := abi.JSON(strings.NewReader(contractAbi))
+		if err != nil {
+			log.Fatal(err)
+		}
+		contracts[i] = &contractAbi
+		contractAbis[contractAddresses[i]] = &contractAbi
+	}
+
+	latestBlockNumber := uint64(0)
+
+	// Subscribe to new block headers
+	go func() {
+		for {
+			latestBlock, err := client.BlockByNumber(context.Background(), nil)
+			if err != nil {
+				log.Printf("Error getting latest block number: %v", err)
+				time.Sleep(5 * time.Second)
+				continue
+			}
+
+			if latestBlock.NumberU64() > latestBlockNumber {
+				fmt.Printf("Latest block number: %d\n", latestBlock.NumberU64())
+				getAllEventsInBlock(client, contracts, latestBlock.NumberU64())
+				latestBlockNumber = latestBlock.NumberU64()
+			}
+
+			time.Sleep(5 * time.Second)
+		}
+	}()
 }
