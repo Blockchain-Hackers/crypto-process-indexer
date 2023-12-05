@@ -1,17 +1,15 @@
 package functions
 
-import (
-	// "fmt"
-	// "github.com/blockchain-hackers/indexer"
-)
+// "fmt"
+// "github.com/blockchain-hackers/indexer"
 
-type ProcessFunctionParams struct {
+type FunctionParams struct {
 	// The name of the function
 	FunctionName string                 `json:"functionName"`
 	Parameters   map[string]interface{} `json:"parameters"`
 }
 
-type ProcessFunctionError struct {
+type FunctionError struct {
 	// The name of the function
 	FunctionName string `json:"functionName"`
 	// The error message
@@ -19,8 +17,9 @@ type ProcessFunctionError struct {
 	Trace   string `json:"trace"`
 }
 
-type ProcessFunctionResponse struct {
-	FunctionName string `json:"functionName"`
-	Value        string `json:"value"`
-}
 
+
+type FunctionResponse struct {
+	FunctionName string `json:"functionName"`
+	Value        map[string]interface{} `json:"value"`
+}

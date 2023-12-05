@@ -12,12 +12,12 @@ import (
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
-func Transfer(params ProcessFunctionParams) (ProcessFunctionResponse, ProcessFunctionError) {
+func Transfer(params FunctionParams) (FunctionResponse, FunctionError) {
 	const infuraURL = "https://sepolia.infura.io/v3/927b0bef549145fba75661d347f23b8a"
 	requiredParams := []string{"amount", "privateKey", "to"}
 	for _, param := range requiredParams {
 		if _, ok := params.Parameters[param]; !ok {
-			return ProcessFunctionResponse{}, ProcessFunctionError{
+			return FunctionResponse{}, FunctionError{
 				FunctionName: params.FunctionName,
 				Message:      fmt.Sprintf("%s is required", param),
 			}
@@ -32,7 +32,7 @@ func Transfer(params ProcessFunctionParams) (ProcessFunctionResponse, ProcessFun
 	// create a new client
 	client, err := ethclient.DialContext(context.Background(), infuraURL)
 	if err != nil {
-		return ProcessFunctionResponse{}, ProcessFunctionError{
+		return FunctionResponse{}, FunctionError{
 			FunctionName: params.FunctionName,
 			Message:      err.Error(),
 		}
@@ -40,7 +40,7 @@ func Transfer(params ProcessFunctionParams) (ProcessFunctionResponse, ProcessFun
 
 	_privateKey, err := crypto.HexToECDSA(privateKey)
 	if err != nil {
-		return ProcessFunctionResponse{}, ProcessFunctionError{
+		return FunctionResponse{}, FunctionError{
 			FunctionName: params.FunctionName,
 			Message:      err.Error(),
 		}
@@ -49,7 +49,7 @@ func Transfer(params ProcessFunctionParams) (ProcessFunctionResponse, ProcessFun
 	publicKey := _privateKey.Public()
 	publicKeyECDSA, ok := publicKey.(*ecdsa.PublicKey)
 	if !ok {
-		return ProcessFunctionResponse{}, ProcessFunctionError{
+		return FunctionResponse{}, FunctionError{
 			FunctionName: params.FunctionName,
 			Message:      "error casting public key to ECDSA",
 		}
@@ -60,7 +60,7 @@ func Transfer(params ProcessFunctionParams) (ProcessFunctionResponse, ProcessFun
 
 	nonce, err := client.PendingNonceAt(context.Background(), fromAddress)
 	if err != nil {
-		return ProcessFunctionResponse{}, ProcessFunctionError{
+		return FunctionResponse{}, FunctionError{
 			FunctionName: params.FunctionName,
 			Message:      err.Error(),
 		}
@@ -68,7 +68,7 @@ func Transfer(params ProcessFunctionParams) (ProcessFunctionResponse, ProcessFun
 
 	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		return ProcessFunctionResponse{}, ProcessFunctionError{
+		return FunctionResponse{}, FunctionError{
 			FunctionName: params.FunctionName,
 			Message:      err.Error(),
 		}
@@ -82,7 +82,7 @@ func Transfer(params ProcessFunctionParams) (ProcessFunctionResponse, ProcessFun
 	// Sign the transaction
 	chainID, err := client.NetworkID(context.Background())
 	if err != nil {
-		return ProcessFunctionResponse{}, ProcessFunctionError{
+		return FunctionResponse{}, FunctionError{
 			FunctionName: params.FunctionName,
 			Message:      err.Error(),
 		}
@@ -90,7 +90,7 @@ func Transfer(params ProcessFunctionParams) (ProcessFunctionResponse, ProcessFun
 
 	signedTx, err := types.SignTx(tx, types.NewEIP155Signer(chainID), _privateKey)
 	if err != nil {
-		return ProcessFunctionResponse{}, ProcessFunctionError{
+		return FunctionResponse{}, FunctionError{
 			FunctionName: params.FunctionName,
 			Message:      err.Error(),
 		}
@@ -98,14 +98,17 @@ func Transfer(params ProcessFunctionParams) (ProcessFunctionResponse, ProcessFun
 
 	err = client.SendTransaction(context.Background(), signedTx)
 	if err != nil {
-		return ProcessFunctionResponse{}, ProcessFunctionError{
+		return FunctionResponse{}, FunctionError{
 			FunctionName: params.FunctionName,
 			Message:      err.Error(),
 		}
 	}
 
-	return ProcessFunctionResponse{
+	return FunctionResponse{
 		FunctionName: params.FunctionName,
-		Value:        signedTx.Hash().Hex(),
-	}, ProcessFunctionError{}
+		Value: map[string]interface{}{
+			"txHash":   signedTx.Hash().Hex(),
+			"gasLimit": signedTx.Gas(),
+		},
+	}, FunctionError{}
 }
