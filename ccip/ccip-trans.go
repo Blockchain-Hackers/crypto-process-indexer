@@ -383,6 +383,7 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 
 
 	instance, err := store.NewStore(address, client)
+	
 
 	// Load the contract instance
 	contractInstance, err := NewContract(contractAddress, client)
@@ -395,11 +396,21 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 		query := ethereum.CallMsg{
 			To:   &contractAddress,
 			Data: parsedABI.Methods["transferTokensPayLINK"].ID,
+			// ---- params ---- 
+			// uint64 _destinationChainSelector,
+			// address _receiver,
+			// address _token,
+			// uint256 _amount
 		}
 	} else {
 		query := ethereum.CallMsg{
 			To:   &contractAddress,
 			Data: parsedABI.Methods["transferTokensPayNative"].ID,
+			// ---- params ---- 
+			// uint64 _destinationChainSelector,
+			// address _receiver,
+			// address _token,
+			// uint256 _amount
 		}
 	}
 
