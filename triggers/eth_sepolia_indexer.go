@@ -147,3 +147,22 @@ func (v EthSepoliaIndexer) run() {
 		}
 	}()
 }
+
+type TransferEventData struct {
+	From   string `json:"from"`
+	To     string `json:"to"`
+	Amount int64  `json:"amount"`
+}
+
+
+func (trigger *EthSepoliaIndexer) processEvent(event Event) {
+	// look for all flows with this event name as triger using mongoDb and the event name
+	// if found, run the flow
+	// if not found, do nothing
+
+
+}
+
+// func (trigger *EthSepoliaIndexer) EventName() string {
+// 	return "ChainlinkPriceFeed"
+// }

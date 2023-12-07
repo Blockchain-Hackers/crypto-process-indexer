@@ -1,0 +1,115 @@
+package main
+
+import (
+	"fmt"
+	"sync"
+	"time"
+)
+
+// PubSub represents a simple publish-subscribe system.
+type PubSub struct {
+	mu      sync.Mutex
+	subscribers map[string][]chan string
+}
+
+// NewPubSub creates a new PubSub instance.
+func NewPubSub() *PubSub {
+	return &PubSub{
+		subscribers: make(map[string][]chan string),
+	}
+}
+
+// Subscribe adds a new subscriber for a specific topic.
+func (ps *PubSub) Subscribe(topic string, ch chan string) {
+	ps.mu.Lock()
+	defer ps.mu.Unlock()
+
+	if _, ok := ps.subscribers[topic]; !ok {
+		ps.subscribers[topic] = make([]chan string, 0)
+	}
+
+	ps.subscribers[topic] = append(ps.subscribers[topic], ch)
+}
+
+// Unsubscribe removes a subscriber from a specific topic.
+func (ps *PubSub) Unsubscribe(topic string, ch chan string) {
+	ps.mu.Lock()
+	defer ps.mu.Unlock()
+
+	if subscribers, ok := ps.subscribers[topic]; ok {
+		for i, subscriber := range subscribers {
+			if subscriber == ch {
+				// Remove the channel from the subscribers list
+				ps.subscribers[topic] = append(subscribers[:i], subscribers[i+1:]...)
+				close(ch)
+				break
+			}
+		}
+
+		// Remove the topic if it has no subscribers
+		if len(ps.subscribers[topic]) == 0 {
+			delete(ps.subscribers, topic)
+		}
+	}
+}
+
+// Publish sends a message to all subscribers of a specific topic.
+func (ps *PubSub) Publish(topic, message string) {
+	ps.mu.Lock()
+	defer ps.mu.Unlock()
+
+	if subscribers, ok := ps.subscribers[topic]; ok {
+		for _, subscriber := range subscribers {
+			go func(ch chan string) {
+				// Non-blocking send to avoid blocking the publisher
+				select {
+				case ch <- message:
+				default:
+					// Skip sending if the channel is full
+				}
+			}(subscriber)
+		}
+	}
+}
+
+func main() {
+	// Create a new PubSub instance
+	pubsub := NewPubSub()
+
+	// Create subscribers
+	subscriber1 := make(chan string)
+	subscriber2 := make(chan string)
+
+	// Subscribe subscribers to topics
+	pubsub.Subscribe("topic1", subscriber1)
+	pubsub.Subscribe("topic2", subscriber2)
+
+	// Publish some messages
+	go func() {
+		for i := 0; i < 5; i++ {
+			time.Sleep(time.Second)
+			pubsub.Publish("topic1", fmt.Sprintf("Message %d for topic1", i+1))
+		}
+	}()
+
+	go func() {
+		for i := 0; i < 5; i++ {
+			time.Sleep(time.Second)
+			pubsub.Publish("topic2", fmt.Sprintf("Message %d for topic2", i+1))
+		}
+	}()
+
+	// Receive messages from subscribers
+	go func() {
+		for {
+			select {
+			case msg := <-subscriber1:
+				fmt.Println("Subscriber 1 received:", msg)
+			case msg := <-subscriber2:
+				fmt.Println("Subscriber 2 received:", msg)
+			}
+		}
+	}()
+
+	// Keep the program running
+}

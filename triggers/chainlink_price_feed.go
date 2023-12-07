@@ -143,3 +143,11 @@ func getLatestPrice(pair string) (*ChainlinkLatestRoundData, error) {
 // 	trigger := &ChainlinkPriceFeed{}
 // 	trigger.run()
 // }
+
+func (trigger *ChainlinkPriceFeed) processEvent(event Event) {
+	// look for all flows with this event name as triger
+}
+
+func (trigger *ChainlinkPriceFeed) EventName() string {
+	return "ChainlinkPriceFeed"
+}

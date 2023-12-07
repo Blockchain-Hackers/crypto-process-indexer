@@ -1,6 +1,6 @@
-package triggers
+// package triggers
 
-// package main
+package main
 
 import (
 	"context"
@@ -349,23 +349,19 @@ var ChainlinkCCIPAbi = `[
 // const infuraURL = "wss://sepolia.infura.io/ws/v3/927b0bef549145fba75661d347f23b8a"
 
 type CCIPTransferInfo struct {
-	amount string
-	address string
-	senderChainId string
+	amount          string
+	address         string
+	senderChainId   string
 	receiverChainId string
-	useLink bool
+	useLink         bool
 }
-
-
 
 type CCIPResponse struct {
-	msg string
+	messageId string
 }
 
-
-
 func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
-	rpcUrl := ""
+	rpcUrl := "wss://sepolia.infura.io/ws/v3/927b0bef549145fba75661d347f23b8a"
 	client, err := ethclient.Dial(rpcUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Ethereum client: %v", err)
@@ -381,42 +377,41 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 		return nil, fmt.Errorf("failed to parse contract ABI: %v", err)
 	}
 
+	// instance, err := store.NewStore(address, client)
 
-	instance, err := store.NewStore(address, client)
-
-	// Load the contract instance
-	contractInstance, err := NewContract(contractAddress, client)
+	// // Load the contract instance
+	// contractInstance, err := NewContract(contractAddress, client)
 	if err != nil {
 		log.Fatalf("Failed to instantiate contract: %v", err)
 	}
+	var query ethereum.CallMsg
 
-
-	if (ccipInfo.useLink){
-		query := ethereum.CallMsg{
+	if ccipInfo.useLink {
+		query = ethereum.CallMsg{
 			To:   &contractAddress,
 			Data: parsedABI.Methods["transferTokensPayLINK"].ID,
 		}
 	} else {
-		query := ethereum.CallMsg{
+		query = ethereum.CallMsg{
 			To:   &contractAddress,
 			Data: parsedABI.Methods["transferTokensPayNative"].ID,
 		}
 	}
 
-	
-
 	result, err := client.CallContract(context.Background(), query, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to call contract: %v", err)
 	}
+	fmt.Printf("Result: %v", result)
 	// log result
 	// log.Printf("Result: %v", result)
 
 	// var answer big.Int
-	var data, _ = parsedABI.Unpack("latestRoundData", result)
+	var data, _err = parsedABI.Unpack("transferTokensPayLINK", result)
 	log.Printf("Data: %v", data)
-	var answer2 ChainlinkLatestRoundData
-	err = parsedABI.UnpackIntoInterface(&answer2, "latestRoundData", result)
+	log.Printf("error: %v", _err)
+	var answer2 CCIPResponse
+	// err = parsedABI.UnpackIntoInterface(&answer2, "", result)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unpack contract result: %v", err)
 	}
@@ -424,7 +419,20 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 	return &answer2, nil
 }
 
-// func main() {
-// 	trigger := &ChainlinkPriceFeed{}
-// 	trigger.run()
-// }
+func main() {
+	var resp, err = transferToken(
+		CCIPTransferInfo{
+			amount:          "1000000000000000000",
+			address:         "0x0",
+			senderChainId:   "0x0",
+			receiverChainId: "0x0",
+			useLink:         false,
+		},
+	)
+
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+
+	log.Printf("Response: %v", resp.messageId)
+}
