@@ -1,4 +1,5 @@
 package triggers
+
 // package main
 
 import (
@@ -77,6 +78,8 @@ var ChainlinkContractABI = `[
 
 // run triggers
 func (trigger *ChainlinkPriceFeed) run() {
+	fmt.Println("Running Chainlink Price Feed trigger...")
+	// fmt.Println(DBClient)
 	for {
 		for pair := range pairs {
 			price, err := getLatestPrice(pair)
