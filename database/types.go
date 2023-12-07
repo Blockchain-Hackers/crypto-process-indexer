@@ -24,13 +24,13 @@ type Parameter struct {
 
 // Trigger represents the trigger information.
 type Trigger struct {
-	Name       string      `bson:"name,omitempty"`
-	Slug       string      `bson:"slug,omitempty"`
-	Parameters []Parameter `bson:"parameters,omitempty"`
-	TriggerID  string      `bson:"trigger_id,omitempty"`
+	Name       string             `bson:"name,omitempty"`
+	Slug       string             `bson:"slug,omitempty"`
+	Parameters []Parameter        `bson:"parameters,omitempty"`
+	TriggerID  string             `bson:"trigger_id,omitempty"`
 	ID         primitive.ObjectID `bson:"_id,omitempty"`
-	CreatedAt  time.Time   `bson:"created_at,omitempty"`
-	UpdatedAt  time.Time   `bson:"updated_at,omitempty"`
+	CreatedAt  time.Time          `bson:"created_at,omitempty"`
+	UpdatedAt  time.Time          `bson:"updated_at,omitempty"`
 }
 
 // Workflow represents the overall workflow structure.
@@ -43,4 +43,24 @@ type Workflow struct {
 	CreatedAt time.Time          `bson:"created_at,omitempty"`
 	UpdatedAt time.Time          `bson:"updated_at,omitempty"`
 	V         int                `bson:"__v,omitempty"`
+}
+
+type FlowRun struct {
+	ID        primitive.ObjectID `bson:"_id,omitempty"`
+	FlowID    primitive.ObjectID `bson:"flow_id,omitempty"`
+	Trigger   Trigger            `bson:"trigger,omitempty"`
+	Steps     []StepRun          `bson:"steps,omitempty"`
+	CreatedAt time.Time          `bson:"created_at,omitempty"`
+	UpdatedAt time.Time          `bson:"updated_at,omitempty"`
+	V         int                `bson:"__v,omitempty"`
+}
+
+type StepRun struct {
+	Name       string      `bson:"name,omitempty"`
+	Parameters []Parameter `bson:"parameters,omitempty"`
+	Function   string      `bson:"function,omitempty"`
+	Logs       string      `bson:"logs,omitempty"`
+	Success    bool        `bson:"success"`
+	Message    string      `bson:"message,omitempty"`
+	Value      interface{} `bson:"value,omitempty"`
 }

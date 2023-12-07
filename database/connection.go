@@ -9,6 +9,7 @@ import (
 
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
@@ -90,4 +91,16 @@ func FindFlows(filter bson.M) []Workflow {
 		}
 	}
 	return flows
+}
+
+func WriteRunToFlow(flowID primitive.ObjectID, run FlowRun) {
+	// write the run to the flow runs collection
+	_, err := FlowsCollection.UpdateOne(context.Background(), bson.M{"_id": flowID}, bson.M{
+		"$push": bson.M{
+			"runs": run,
+		},
+	})
+	if err != nil {
+		fmt.Println("Error: ", err)
+	}
 }

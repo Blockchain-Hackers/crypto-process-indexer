@@ -66,5 +66,6 @@ func SendEmail(params FunctionParams) (FunctionResponse, FunctionError) {
 			"id":       id,
 			"response": resp,
 		},
+		Parameters: params.Parameters,
 	}, FunctionError{}
 }

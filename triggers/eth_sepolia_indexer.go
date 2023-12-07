@@ -11,6 +11,7 @@ import (
 	"github.com/blockchain-hackers/indexer/database"
 	"github.com/blockchain-hackers/indexer/functions"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"go.mongodb.org/mongo-driver/bson"
 	// "fmt"
@@ -33,7 +34,7 @@ type EthSepoliaIndexer struct {
 }
 
 // Get all events in a given block for specified contract addresses
-func getAllEventsInBlock(client *ethclient.Client, contracts []*abi.ABI, blockNumber uint64) {
+func (trigger *EthSepoliaIndexer) getAllEventsInBlock(client *ethclient.Client, contracts []*abi.ABI, blockNumber uint64) {
 	block, err := client.BlockByNumber(context.Background(), big.NewInt(int64(blockNumber)))
 	if err != nil {
 		log.Printf("Error getting block: %v", err)
@@ -41,8 +42,20 @@ func getAllEventsInBlock(client *ethclient.Client, contracts []*abi.ABI, blockNu
 	}
 
 	for _, tx := range block.Transactions() {
-		fmt.Printf("Transaction: to %+v\n", tx.To())
+		// fmt.Printf("Transaction: to %+v\n", tx.To())
+		if tx.To() != nil {
+			go func(tx *types.Transaction) {
+				trigger.processEvent(Event{
+					EventName: "ListenForTransfers",
+					Data: map[string]interface{}{
+						"To":      tx.To().Hex(),
+						"ChainID": "11155111",
+					},
+				})
+			}(tx)
+		}
 		if tx.To() != nil && contains(contractAddresses, strings.ToLower(tx.To().Hex())) {
+
 			fmt.Printf("New transaction on contract %s\n", tx.To().Hex())
 			// fmt.Printf("Transaction: %+v\n", tx)
 
@@ -103,15 +116,6 @@ func findContract(contracts []*abi.ABI, address string) *abi.ABI {
 }
 
 func (v EthSepoliaIndexer) run() {
-	v.processEvent(Event{
-		EventName: "ListenForTransfers",
-		Data: map[string]interface{}{
-			"From":     "0x84188bc94B497131d0Ee2Cf7C154b22357c25208",
-			"greeting": "Hello, World!",
-			"To":       "0x61d8838f9A00250C9AF13D622DA7c08c372ee587",
-			"ChainID":  "11155111",
-		},
-	})
 
 	// Initialize Ethereum client
 	client, err := ethclient.Dial(infuraURL)
@@ -140,24 +144,24 @@ func (v EthSepoliaIndexer) run() {
 	latestBlockNumber := uint64(0)
 
 	// Subscribe to new block headers
-	go func() {
-		for {
-			latestBlock, err := client.BlockByNumber(context.Background(), nil)
-			if err != nil {
-				log.Printf("Error getting latest block number: %v", err)
-				time.Sleep(5 * time.Second)
-				continue
-			}
-
-			if latestBlock.NumberU64() > latestBlockNumber {
-				fmt.Printf("Latest block number: %d\n", latestBlock.NumberU64())
-				getAllEventsInBlock(client, contracts, latestBlock.NumberU64())
-				latestBlockNumber = latestBlock.NumberU64()
-			}
-
+	// go func() {
+	for {
+		latestBlock, err := client.BlockByNumber(context.Background(), nil)
+		if err != nil {
+			log.Printf("Error getting latest block number: %v", err)
 			time.Sleep(5 * time.Second)
+			continue
 		}
-	}()
+
+		if latestBlock.NumberU64() > latestBlockNumber {
+			fmt.Printf("Latest block number: %d\n", latestBlock.NumberU64())
+			v.getAllEventsInBlock(client, contracts, latestBlock.NumberU64())
+			latestBlockNumber = latestBlock.NumberU64()
+		}
+
+		time.Sleep(5 * time.Second)
+	}
+	// }()
 }
 
 type TransferEventData struct {
@@ -185,27 +189,36 @@ func (trigger *EthSepoliaIndexer) processEvent(event Event) {
 	for _, flow := range flows {
 		fmt.Printf("Running flow: %+v\n", flow.Name)
 		// get the steps and run them in series
-		for _, step := range flow.Steps {
-			fmt.Printf("Running step: %+v\n", step.Name)
-			// run the step
-			fmt.Println("Function: ", step.Function)
+		go func(flow database.Workflow) {
+			var steps []database.StepRun
+			for _, step := range flow.Steps {
+				fmt.Printf("Running step: %+v\n", step.Name)
+				// run the step
+				fmt.Println("Function: ", step.Function)
 
-			resp, err:= functions.CallFunc(step.Function, functions.ConvertDBParamsToFunctionParams(step.Parameters))
-			if err.Exists() {
-				fmt.Println("Error: ", err)
-				// stop the flow
-				break
-			} else {
-				fmt.Println("Response: ", resp)
-				// save result to flow runs
-				
+				resp, err := functions.CallFunc(step.Function, functions.ConvertDBParamsToFunctionParams(step.Parameters, step.Name))
+				if err.Exists() {
+					fmt.Println("Error: ", err)
+					steps = append(steps, functions.ConvertFunctionErrorToDBStep(err))
+					break
+				} else {
+					fmt.Println("Response: ", resp)
+					// save result to flow runs
+					steps = append(steps, functions.ConvertFunctionResponseToDBStep(resp))
+				}
 			}
-			// if it has a function, run it
-			// if it has a function_id, run it
-			// if it has parameters, use them
-			// if it has no function or function_id, do nothing
-			// if it has no parameters, do nothing
-		}
+			// save the run to flow runs
+			run := database.FlowRun{
+				FlowID:    flow.ID,
+				Trigger:   flow.Trigger,
+				Steps:     steps,
+				V:         0,
+				CreatedAt: time.Now(),
+				UpdatedAt: time.Now(),
+			}
+			database.WriteRunToFlow(flow.ID, run)
+		}(flow)
+
 	}
 
 }

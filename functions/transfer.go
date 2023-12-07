@@ -110,5 +110,6 @@ func Transfer(params FunctionParams) (FunctionResponse, FunctionError) {
 			"txHash":   signedTx.Hash().Hex(),
 			"gasLimit": signedTx.Gas(),
 		},
+		Parameters: params.Parameters,
 	}, FunctionError{}
 }

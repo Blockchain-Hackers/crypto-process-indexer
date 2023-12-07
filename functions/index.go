@@ -15,6 +15,7 @@ type FunctionError struct {
 	// The error message
 	Message string `json:"message"`
 	Trace   string `json:"trace"`
+	Parameters map[string]interface{} `json:"parameters"`
 }
 
 func (e FunctionError) Exists() bool {
@@ -24,4 +25,7 @@ func (e FunctionError) Exists() bool {
 type FunctionResponse struct {
 	FunctionName string                 `json:"functionName"`
 	Value        map[string]interface{} `json:"value"`
+	Parameters   map[string]interface{} `json:"parameters"`
+	Logs         string               `json:"logs"`
+	Message	  string                 `json:"message"`
 }

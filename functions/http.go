@@ -20,6 +20,8 @@ func HTTPRequest(params FunctionParams) (FunctionResponse, FunctionError) {
 			return FunctionResponse{}, FunctionError{
 				FunctionName: params.FunctionName,
 				Message:      fmt.Sprintf("%s is required", param),
+				Parameters:   params.Parameters,
+				Trace:        fmt.Sprintf("%+v", params.Parameters),
 			}
 		}
 	}
@@ -37,13 +39,15 @@ func HTTPRequest(params FunctionParams) (FunctionResponse, FunctionError) {
 	bson.Unmarshal(body, &bodyMap)
 	bson.Unmarshal(headers, &headersMap)
 	jsonBody, _ := json.Marshal(bodyMap)
-	// Create a new HTTP request 
-	req, err := http.NewRequest(method, url,  bytes.NewBuffer(jsonBody))
+	// Create a new HTTP request
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBody))
 	// bytes.NewBuffer([]byte(body)))
 	if err != nil {
 		return FunctionResponse{}, FunctionError{
 			FunctionName: params.FunctionName,
 			Message:      err.Error(),
+			Trace:        fmt.Sprintf("%+v", err),
+			Parameters:   params.Parameters,
 		}
 	}
 
@@ -59,6 +63,7 @@ func HTTPRequest(params FunctionParams) (FunctionResponse, FunctionError) {
 			FunctionName: params.FunctionName,
 			Message:      err.Error(),
 			Trace:        fmt.Sprintf("%+v", err),
+			Parameters:   params.Parameters,
 		}
 	}
 
@@ -85,5 +90,6 @@ func HTTPRequest(params FunctionParams) (FunctionResponse, FunctionError) {
 			"responseHeaders": resp.Header,
 			"body":            respBodyJSON,
 		},
+		Parameters: params.Parameters,
 	}, FunctionError{}
 }
