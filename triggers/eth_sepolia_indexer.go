@@ -8,8 +8,11 @@ import (
 	"strings"
 	"time"
 
+	"github.com/blockchain-hackers/indexer/database"
+	"github.com/blockchain-hackers/indexer/functions"
 	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"go.mongodb.org/mongo-driver/bson"
 	// "fmt"
 	// "github.com/blockchain-hackers/indexer"
 )
@@ -27,7 +30,6 @@ var contractAbi = `[{"inputs":[{"internalType":"string","name":"_greeting","type
 var contractAbis = map[string]*abi.ABI{}
 
 type EthSepoliaIndexer struct {
-
 }
 
 // Get all events in a given block for specified contract addresses
@@ -101,6 +103,16 @@ func findContract(contracts []*abi.ABI, address string) *abi.ABI {
 }
 
 func (v EthSepoliaIndexer) run() {
+	v.processEvent(Event{
+		EventName: "ListenForTransfers",
+		Data: map[string]interface{}{
+			"From":     "0x84188bc94B497131d0Ee2Cf7C154b22357c25208",
+			"greeting": "Hello, World!",
+			"To":       "0x61d8838f9A00250C9AF13D622DA7c08c372ee587",
+			"ChainID":  "11155111",
+		},
+	})
+
 	// Initialize Ethereum client
 	client, err := ethclient.Dial(infuraURL)
 	if err != nil {
@@ -149,17 +161,52 @@ func (v EthSepoliaIndexer) run() {
 }
 
 type TransferEventData struct {
-	From   string `json:"from"`
-	To     string `json:"to"`
-	Amount int64  `json:"amount"`
+	From    string `json:"from"`
+	To      string `json:"to"`
+	Amount  int64  `json:"amount"`
+	ChainID string `json:"chainID"`
 }
-
 
 func (trigger *EthSepoliaIndexer) processEvent(event Event) {
 	// look for all flows with this event name as triger using mongoDb and the event name
 	// if found, run the flow
 	// if not found, do nothing
+	filter := bson.M{
+		"trigger.name": event.EventName,
+		"trigger.parameters": bson.M{
+			"$all": []bson.M{
+				{"$elemMatch": bson.M{"name": "toAddress", "value": event.Data["To"]}},
+				{"$elemMatch": bson.M{"name": "chainID", "value": event.Data["ChainID"]}},
+			},
+		},
+	}
+	var flows = database.FindFlows(filter)
 
+	for _, flow := range flows {
+		fmt.Printf("Running flow: %+v\n", flow.Name)
+		// get the steps and run them in series
+		for _, step := range flow.Steps {
+			fmt.Printf("Running step: %+v\n", step.Name)
+			// run the step
+			fmt.Println("Function: ", step.Function)
+
+			resp, err:= functions.CallFunc(step.Function, functions.ConvertDBParamsToFunctionParams(step.Parameters))
+			if err.Exists() {
+				fmt.Println("Error: ", err)
+				// stop the flow
+				break
+			} else {
+				fmt.Println("Response: ", resp)
+				// save result to flow runs
+				
+			}
+			// if it has a function, run it
+			// if it has a function_id, run it
+			// if it has parameters, use them
+			// if it has no function or function_id, do nothing
+			// if it has no parameters, do nothing
+		}
+	}
 
 }
 

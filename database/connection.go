@@ -13,6 +13,10 @@ import (
 	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
+var Client *mongo.Client
+var FlowsCollection *mongo.Collection
+var TriggersCollection *mongo.Collection
+
 // return a MongoDB client
 func Connect() *mongo.Client {
 	_err := godotenv.Load(".env")
@@ -29,16 +33,61 @@ func Connect() *mongo.Client {
 	if err != nil {
 		panic(err)
 	}
-	defer func() {
-		if err = client.Disconnect(context.TODO()); err != nil {
-			panic(err)
-		}
-	}()
+	// defer func() {
+	// 	if err = client.Disconnect(context.TODO()); err != nil {
+	// 		panic(err)
+	// 	}
+	// }()
 	// Send a ping to confirm a successful connection
 	var result bson.M
 	if err := client.Database("admin").RunCommand(context.TODO(), bson.D{{"ping", 1}}).Decode(&result); err != nil {
 		panic(err)
 	}
 	fmt.Println("Pinged your Database. You successfully connected to MongoDB!")
+	Client = client
+	FlowsCollection = Client.Database("cp").Collection("flows")
+	TriggersCollection = Client.Database("cp").Collection("triggers")
 	return client
+}
+
+func FindFlowsByTrigger(triggerName string) []Workflow {
+	var cursor, err = FlowsCollection.Find(context.Background(), map[string]interface{}{
+		"trigger.name": triggerName,
+	})
+	var flows []Workflow
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return flows
+	}
+	defer cursor.Close(context.Background())
+	for cursor.Next(context.Background()) {
+		var data Workflow
+		err = cursor.Decode(&data)
+		if err != nil {
+			fmt.Println("Error: ", err)
+		} else {
+			flows = append(flows, data)
+		}
+	}
+	return flows
+}
+
+func FindFlows(filter bson.M) []Workflow {
+	var cursor, err = FlowsCollection.Find(context.Background(), filter)
+	var flows []Workflow
+	if err != nil {
+		fmt.Println("Error: ", err)
+		return flows
+	}
+	defer cursor.Close(context.Background())
+	for cursor.Next(context.Background()) {
+		var data Workflow
+		err = cursor.Decode(&data)
+		if err != nil {
+			fmt.Println("Error: ", err)
+		} else {
+			flows = append(flows, data)
+		}
+	}
+	return flows
 }

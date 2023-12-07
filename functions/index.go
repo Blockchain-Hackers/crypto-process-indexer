@@ -17,9 +17,11 @@ type FunctionError struct {
 	Trace   string `json:"trace"`
 }
 
-
+func (e FunctionError) Exists() bool {
+	return e.Message != ""
+}
 
 type FunctionResponse struct {
-	FunctionName string `json:"functionName"`
+	FunctionName string                 `json:"functionName"`
 	Value        map[string]interface{} `json:"value"`
 }
