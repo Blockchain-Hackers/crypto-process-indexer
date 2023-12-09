@@ -368,7 +368,7 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 	}
 	defer client.Close()
 
-	sendContractAddr := ""
+	sendContractAddr := "0xD0daae2231E9CB96b94C8512223533293C3693Bf"
 
 	contractAddress := common.HexToAddress(sendContractAddr)
 	parsedABI, err := abi.JSON(strings.NewReader(ChainlinkCCIPAbi))
