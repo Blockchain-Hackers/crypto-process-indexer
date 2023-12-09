@@ -5,6 +5,7 @@ import (
 	"time"
 
 	"github.com/blockchain-hackers/indexer/database"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 // "github.com/blockchain-hackers/indexer/
@@ -57,6 +58,7 @@ func ConvertFunctionResponseToDBStep(functionResponse FunctionResponse) database
 		Success:  true,
 		Message:  functionResponse.Message,
 		Value:    functionResponse.Value,
+		ID:       primitive.NewObjectID(),
 	}
 }
 
@@ -70,5 +72,6 @@ func ConvertFunctionErrorToDBStep(functionError FunctionError) database.StepRun 
 		Logs:     functionError.Trace,
 		Success:  false,
 		Message:  functionError.Message,
+		ID:       primitive.NewObjectID(),
 	}
 }
