@@ -8,8 +8,12 @@ import (
 	"strings"
 	"time"
 
+	"github.com/blockchain-hackers/indexer/database"
+	"github.com/blockchain-hackers/indexer/runner"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
+	"go.mongodb.org/mongo-driver/bson"
 	// "fmt"
 	// "github.com/blockchain-hackers/indexer"
 )
@@ -27,11 +31,10 @@ var contractAbi = `[{"inputs":[{"internalType":"string","name":"_greeting","type
 var contractAbis = map[string]*abi.ABI{}
 
 type EthSepoliaIndexer struct {
-
 }
 
 // Get all events in a given block for specified contract addresses
-func getAllEventsInBlock(client *ethclient.Client, contracts []*abi.ABI, blockNumber uint64) {
+func (trigger *EthSepoliaIndexer) getAllEventsInBlock(client *ethclient.Client, contracts []*abi.ABI, blockNumber uint64) {
 	block, err := client.BlockByNumber(context.Background(), big.NewInt(int64(blockNumber)))
 	if err != nil {
 		log.Printf("Error getting block: %v", err)
@@ -39,8 +42,27 @@ func getAllEventsInBlock(client *ethclient.Client, contracts []*abi.ABI, blockNu
 	}
 
 	for _, tx := range block.Transactions() {
-		fmt.Printf("Transaction: to %+v\n", tx.To())
+		// fmt.Printf("Transaction: to %+v\n", tx.To())
+		if tx.To() != nil {
+			go func(tx *types.Transaction) {
+				var sender, _ = types.Sender(types.NewEIP155Signer(big.NewInt(11155111)), tx)
+				trigger.processEvent(Event{
+					EventName: "ListenForTransfers",
+					Data: map[string]interface{}{
+						"To":              tx.To().Hex(),
+						"ChainID":         "11155111",
+						"From":            sender.Hex(),
+						"Amount":          tx.Value().Int64(),
+						"FeeInWei":        tx.GasPrice().Int64(),
+						"BlockNumber":     block.Number().Int64(),
+						"TransactionHash": tx.Hash().Hex(),
+						"Timestamp":       block.Time(),
+					},
+				})
+			}(tx)
+		}
 		if tx.To() != nil && contains(contractAddresses, strings.ToLower(tx.To().Hex())) {
+
 			fmt.Printf("New transaction on contract %s\n", tx.To().Hex())
 			// fmt.Printf("Transaction: %+v\n", tx)
 
@@ -62,7 +84,6 @@ func getAllEventsInBlock(client *ethclient.Client, contracts []*abi.ABI, blockNu
 						fmt.Printf("Error getting event by ID: %v", err)
 						continue
 					}
-
 					// Unpack the log data
 					// eventData := []interface{ new(interface{}) }
 					// err, eventData =
@@ -101,6 +122,7 @@ func findContract(contracts []*abi.ABI, address string) *abi.ABI {
 }
 
 func (v EthSepoliaIndexer) run() {
+
 	// Initialize Ethereum client
 	client, err := ethclient.Dial(infuraURL)
 	if err != nil {
@@ -128,22 +150,66 @@ func (v EthSepoliaIndexer) run() {
 	latestBlockNumber := uint64(0)
 
 	// Subscribe to new block headers
-	go func() {
-		for {
-			latestBlock, err := client.BlockByNumber(context.Background(), nil)
-			if err != nil {
-				log.Printf("Error getting latest block number: %v", err)
-				time.Sleep(5 * time.Second)
-				continue
-			}
-
-			if latestBlock.NumberU64() > latestBlockNumber {
-				fmt.Printf("Latest block number: %d\n", latestBlock.NumberU64())
-				getAllEventsInBlock(client, contracts, latestBlock.NumberU64())
-				latestBlockNumber = latestBlock.NumberU64()
-			}
-
+	// go func() {
+	for {
+		latestBlock, err := client.BlockByNumber(context.Background(), nil)
+		if err != nil {
+			log.Printf("Error getting latest block number: %v", err)
 			time.Sleep(5 * time.Second)
+			continue
 		}
-	}()
+
+		if latestBlock.NumberU64() > latestBlockNumber {
+			fmt.Printf("Latest block number: %d\n", latestBlock.NumberU64())
+			v.getAllEventsInBlock(client, contracts, latestBlock.NumberU64())
+			latestBlockNumber = latestBlock.NumberU64()
+		}
+
+		time.Sleep(5 * time.Second)
+	}
 }
+
+type TransferEventData struct {
+	From            string `json:"from"`
+	To              string `json:"to"`
+	Amount          int64  `json:"amount"`
+	ChainID         string `json:"chainID"`
+	FeeInWei        int64  `json:"feeInWei"`
+	BlockNumber     int64  `json:"blockNumber"`
+	TransactionHash string `json:"transactionHash"`
+	Timestamp       int64  `json:"timestamp"`
+}
+
+func (trigger *EthSepoliaIndexer) processEvent(event Event) {
+	// look for all flows with this event name as triger using mongoDb and the event name
+	// if found, run the flow
+	// if not found, do nothing
+	filter := bson.M{
+		"trigger.name": event.EventName,
+		"trigger.parameters": bson.M{
+			"$all": []bson.M{
+				{"$elemMatch": bson.M{"name": "toAddress", "value": event.Data["To"]}},
+				{"$elemMatch": bson.M{"name": "chainID", "value": event.Data["ChainID"]}},
+			},
+		},
+	}
+	var flows = database.FindFlows(filter)
+
+	for _, flow := range flows {
+		fmt.Printf("Running flow: %+v\n", flow.Name)
+		// get the steps and run them in series
+		go runner.Run(flow, map[string]interface{}{
+			"value":       event.Data["Amount"],
+			"sender":      event.Data["From"],
+			"feeInWei":    event.Data["FeeInWei"],
+			"blockNumber": event.Data["BlockNumber"],
+			"txHash":      event.Data["TransactionHash"],
+			"timestamp":   event.Data["Timestamp"],
+		})
+	}
+
+}
+
+// func (trigger *EthSepoliaIndexer) EventName() string {
+// 	return "ChainlinkPriceFeed"
+// }

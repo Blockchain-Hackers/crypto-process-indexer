@@ -1,6 +1,6 @@
-package triggers
+// package triggers
 
-// package main
+package main
 
 import (
 	"context"
@@ -351,30 +351,32 @@ var ChainlinkCCIPAbi = `[
 // const infuraURL = "wss://sepolia.infura.io/ws/v3/927b0bef549145fba75661d347f23b8a"
 
 type CCIPTransferInfo struct {
+<<<<<<< HEAD
 	amount int64
 	receiverAddress string
 	tokenAddress string
+=======
+	amount          string
+	address         string
+	senderChainId   string
+>>>>>>> 5e2120911cba2ddb7c8286ca0b2b9ef809359872
 	receiverChainId string
-	useLink bool
+	useLink         bool
 }
-
-
 
 type CCIPResponse struct {
-	msg string
+	messageId string
 }
 
-
-
 func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
-	rpcUrl := ""
+	rpcUrl := "wss://sepolia.infura.io/ws/v3/927b0bef549145fba75661d347f23b8a"
 	client, err := ethclient.Dial(rpcUrl)
 	if err != nil {
 		return nil, fmt.Errorf("failed to connect to Ethereum client: %v", err)
 	}
 	defer client.Close()
 
-	sendContractAddr := ""
+	sendContractAddr := "0xD0daae2231E9CB96b94C8512223533293C3693Bf"
 
 	contractAddress := common.HexToAddress(sendContractAddr)
 	contractAbi, err := abi.JSON(strings.NewReader(ChainlinkCCIPAbi))
@@ -391,6 +393,8 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 	if err != nil {
 		log.Fatalf("Failed to encode function call: %v", err)
 	}
+	var query ethereum.CallMsg
+
 
 	// Replace with your sender address and private key
 	senderAddress := common.HexToAddress("SENDER_ADDRESS")
@@ -398,11 +402,22 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 
 	// Create the transaction
 	nonce, err := client.PendingNonceAt(context.Background(), senderAddress)
-	if err != nil {
-		log.Fatalf("Failed to get nonce: %v", err)
-	}
+	if ccipInfo.useLink {
+		query = ethereum.CallMsg{
+			To:   &contractAddress,
+			Data: parsedABI.Methods["transferTokensPayLINK"].ID,
+		}
+	} else {
+	fmt.Printf("Result: %v", result)
+	// log result
+	// log.Printf("Result: %v", result)
 
-	gasPrice, err := client.SuggestGasPrice(context.Background())
+	// var answer big.Int
+	var data, _err = parsedABI.Unpack("transferTokensPayLINK", result)
+	log.Printf("Data: %v", data)
+	log.Printf("error: %v", _err)
+	var answer2 CCIPResponse
+	// err = parsedABI.UnpackIntoInterface(&answer2, "", result)
 	if err != nil {
 		log.Fatalf("Failed to get gas price: %v", err)
 	}
@@ -430,7 +445,20 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 
 }
 
-// func main() {
-// 	trigger := &ChainlinkPriceFeed{}
-// 	trigger.run()
-// }
+func main() {
+	var resp, err = transferToken(
+		CCIPTransferInfo{
+			amount:          "1000000000000000000",
+			address:         "0x0",
+			senderChainId:   "0x0",
+			receiverChainId: "0x0",
+			useLink:         false,
+		},
+	)
+
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
+
+	log.Printf("Response: %v", resp.messageId)
+}

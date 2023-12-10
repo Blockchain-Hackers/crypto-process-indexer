@@ -96,6 +96,8 @@ func Transfer(params FunctionParams) (FunctionResponse, FunctionError) {
 		}
 	}
 
+	
+
 	err = client.SendTransaction(context.Background(), signedTx)
 	if err != nil {
 		return FunctionResponse{}, FunctionError{
@@ -110,5 +112,6 @@ func Transfer(params FunctionParams) (FunctionResponse, FunctionError) {
 			"txHash":   signedTx.Hash().Hex(),
 			"gasLimit": signedTx.Gas(),
 		},
+		Parameters: params.Parameters,
 	}, FunctionError{}
 }

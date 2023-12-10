@@ -5,6 +5,14 @@ package triggers
 
 type Trigger interface {
 	run()
+	// they should process events if they find one
+	processEvent(Event)
+	// EventName() string
+}
+
+type Event struct {
+	EventName string
+	Data      map[string]interface{}
 }
 
 var triggers = []Trigger{

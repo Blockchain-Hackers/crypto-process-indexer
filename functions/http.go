@@ -5,6 +5,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
+	"go.mongodb.org/mongo-driver/bson"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func HTTPRequest(params FunctionParams) (FunctionResponse, FunctionError) {
@@ -17,6 +20,8 @@ func HTTPRequest(params FunctionParams) (FunctionResponse, FunctionError) {
 			return FunctionResponse{}, FunctionError{
 				FunctionName: params.FunctionName,
 				Message:      fmt.Sprintf("%s is required", param),
+				Parameters:   params.Parameters,
+				Trace:        fmt.Sprintf("%+v", params.Parameters),
 			}
 		}
 	}
@@ -24,20 +29,30 @@ func HTTPRequest(params FunctionParams) (FunctionResponse, FunctionError) {
 	// get the url, method, headers, and body from the params
 	url := params.Parameters["url"].(string)
 	method := params.Parameters["method"].(string)
-	headers := params.Parameters["headers"].(map[string]interface{})
-	body := params.Parameters["body"].(string)
-
+	rawheaders := params.Parameters["headers"].(primitive.D)
+	rawBody := params.Parameters["body"].(primitive.D)
+	// var body map[string]interface{}
+	body, _ := bson.Marshal(rawBody)
+	headers, _ := bson.Marshal(rawheaders)
+	bodyMap := map[string]interface{}{}
+	headersMap := map[string]interface{}{}
+	bson.Unmarshal(body, &bodyMap)
+	bson.Unmarshal(headers, &headersMap)
+	jsonBody, _ := json.Marshal(bodyMap)
 	// Create a new HTTP request
-	req, err := http.NewRequest(method, url, bytes.NewBuffer([]byte(body)))
+	req, err := http.NewRequest(method, url, bytes.NewBuffer(jsonBody))
+	// bytes.NewBuffer([]byte(body)))
 	if err != nil {
 		return FunctionResponse{}, FunctionError{
 			FunctionName: params.FunctionName,
 			Message:      err.Error(),
+			Trace:        fmt.Sprintf("%+v", err),
+			Parameters:   params.Parameters,
 		}
 	}
 
 	// Add headers to the request
-	for key, value := range headers {
+	for key, value := range headersMap {
 		req.Header.Add(key, value.(string))
 	}
 
@@ -48,6 +63,7 @@ func HTTPRequest(params FunctionParams) (FunctionResponse, FunctionError) {
 			FunctionName: params.FunctionName,
 			Message:      err.Error(),
 			Trace:        fmt.Sprintf("%+v", err),
+			Parameters:   params.Parameters,
 		}
 	}
 
@@ -70,9 +86,10 @@ func HTTPRequest(params FunctionParams) (FunctionResponse, FunctionError) {
 	return FunctionResponse{
 		FunctionName: params.FunctionName,
 		Value: map[string]interface{}{
-			"statusCode":      resp.StatusCode,
-			"responseHeaders": resp.Header,
-			"body":            respBodyJSON,
+			"status_code":      resp.StatusCode,
+			"response_headers": resp.Header,
+			"response_body":    respBodyJSON,
 		},
+		Parameters: params.Parameters,
 	}, FunctionError{}
 }
