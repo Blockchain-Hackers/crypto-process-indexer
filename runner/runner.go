@@ -6,6 +6,7 @@ import (
 
 	"github.com/blockchain-hackers/indexer/database"
 	"github.com/blockchain-hackers/indexer/functions"
+	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
 func Run(flow database.Workflow) {
@@ -28,6 +29,7 @@ func Run(flow database.Workflow) {
 	}
 	// save the run to flow runs
 	run := database.FlowRun{
+		ID:		primitive.NewObjectID(),
 		FlowID:    flow.ID,
 		Trigger:   flow.Trigger,
 		Steps:     steps,
