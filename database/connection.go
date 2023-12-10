@@ -104,3 +104,14 @@ func WriteRunToFlow(flowID primitive.ObjectID, run FlowRun) {
 		fmt.Println("Error: ", err)
 	}
 }
+
+func GetAccount(ID primitive.ObjectID) (Account, error) {
+	var account Account
+	err := Client.Database("cp").Collection("accounts").FindOne(context.Background(), bson.M{
+		"_id": ID,
+	}).Decode(&account)
+	if err != nil {
+		return Account{}, err
+	}
+	return account, nil
+}

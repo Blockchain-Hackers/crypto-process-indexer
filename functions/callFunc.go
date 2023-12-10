@@ -39,12 +39,20 @@ func ConvertDBParamsToFunctionParams(
 		Parameters: map[string]interface{}{},
 	}
 	for _, param := range dbParams {
-		// check if its string, if string, replace placeholders
-		if param.Type == "string" {
+		switch param.Type {
+		case "string":
 			params.Parameters[param.Name] = replacePlaceholders(param.Value.(string), ValuesMap)
-		} else {
+		case "account":
+			var accountID = string(param.Value.(primitive.ObjectID).Hex())
+			var accountIDMongo, _ = primitive.ObjectIDFromHex(accountID)
+			var resolvedAccount, _ = database.GetAccount(accountIDMongo)
+			params.Parameters[param.Name] = ConvertDBParamsToFunctionParams(resolvedAccount.Parameters, functionName, triggerValue, []database.StepRun{})
+			fmt.Println("resolvedAccount: ", resolvedAccount)
+			fmt.Println("Param", param)
+		default:
 			params.Parameters[param.Name] = param.Value
 		}
+
 	}
 	params.FunctionName = functionName
 	return params
