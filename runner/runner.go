@@ -9,14 +9,16 @@ import (
 	"go.mongodb.org/mongo-driver/bson/primitive"
 )
 
-func Run(flow database.Workflow) {
+func Run(flow database.Workflow, triggerValue map[string]interface{}) {
 	var steps []database.StepRun
+	// create an ID for this run
+	var runID = primitive.NewObjectID()
 	for _, step := range flow.Steps {
 		fmt.Printf("Running step: %+v\n", step.Name)
 		// run the step
 		fmt.Println("Function: ", step.Function)
 
-		resp, err := functions.CallFunc(step.Function, functions.ConvertDBParamsToFunctionParams(step.Parameters, step.Name))
+		resp, err := functions.CallFunc(step.Function, functions.ConvertDBParamsToFunctionParams(step.Parameters, step.Name, triggerValue, steps))
 		if err.Exists() {
 			fmt.Println("Error: ", err)
 			steps = append(steps, functions.ConvertFunctionErrorToDBStep(err))
@@ -29,7 +31,7 @@ func Run(flow database.Workflow) {
 	}
 	// save the run to flow runs
 	run := database.FlowRun{
-		ID:		primitive.NewObjectID(),
+		ID:        runID,
 		FlowID:    flow.ID,
 		Trigger:   flow.Trigger,
 		Steps:     steps,

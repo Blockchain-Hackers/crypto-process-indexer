@@ -96,6 +96,8 @@ func Transfer(params FunctionParams) (FunctionResponse, FunctionError) {
 		}
 	}
 
+	
+
 	err = client.SendTransaction(context.Background(), signedTx)
 	if err != nil {
 		return FunctionResponse{}, FunctionError{

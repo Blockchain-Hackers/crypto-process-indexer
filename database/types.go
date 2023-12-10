@@ -62,6 +62,6 @@ type StepRun struct {
 	Logs       string      `bson:"logs,omitempty"`
 	Success    bool        `bson:"success"`
 	Message    string      `bson:"message,omitempty"`
-	Value      interface{} `bson:"value,omitempty"`
+	Value     map[string] interface{} `bson:"output,omitempty"`
 	ID  primitive.ObjectID `bson:"_id,omitempty"`
 }

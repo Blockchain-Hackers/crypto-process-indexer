@@ -234,7 +234,10 @@ func (trigger *ChainlinkPriceFeed) processEvent(event Event) {
 		for _, flow := range flows {
 			fmt.Printf("Running flow: %+v\n", flow.Name)
 			// get the steps and run them in series
-			go runner.Run(flow)
+			go runner.Run(flow, map[string]interface{}{
+				"pair":  event.Data["Pair"],
+				"value": event.Data["Price"],
+			})
 		}
 	}
 

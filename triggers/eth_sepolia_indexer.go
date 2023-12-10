@@ -45,11 +45,18 @@ func (trigger *EthSepoliaIndexer) getAllEventsInBlock(client *ethclient.Client, 
 		// fmt.Printf("Transaction: to %+v\n", tx.To())
 		if tx.To() != nil {
 			go func(tx *types.Transaction) {
+				var sender, _ = types.Sender(types.NewEIP155Signer(big.NewInt(11155111)), tx)
 				trigger.processEvent(Event{
 					EventName: "ListenForTransfers",
 					Data: map[string]interface{}{
-						"To":      tx.To().Hex(),
-						"ChainID": "11155111",
+						"To":              tx.To().Hex(),
+						"ChainID":         "11155111",
+						"From":            sender.Hex(),
+						"Amount":          tx.Value().Int64(),
+						"FeeInWei":        tx.GasPrice().Int64(),
+						"BlockNumber":     block.Number().Int64(),
+						"TransactionHash": tx.Hash().Hex(),
+						"Timestamp":       block.Time(),
 					},
 				})
 			}(tx)
@@ -163,10 +170,14 @@ func (v EthSepoliaIndexer) run() {
 }
 
 type TransferEventData struct {
-	From    string `json:"from"`
-	To      string `json:"to"`
-	Amount  int64  `json:"amount"`
-	ChainID string `json:"chainID"`
+	From            string `json:"from"`
+	To              string `json:"to"`
+	Amount          int64  `json:"amount"`
+	ChainID         string `json:"chainID"`
+	FeeInWei        int64  `json:"feeInWei"`
+	BlockNumber     int64  `json:"blockNumber"`
+	TransactionHash string `json:"transactionHash"`
+	Timestamp       int64  `json:"timestamp"`
 }
 
 func (trigger *EthSepoliaIndexer) processEvent(event Event) {
@@ -187,7 +198,14 @@ func (trigger *EthSepoliaIndexer) processEvent(event Event) {
 	for _, flow := range flows {
 		fmt.Printf("Running flow: %+v\n", flow.Name)
 		// get the steps and run them in series
-		go runner.Run(flow)
+		go runner.Run(flow, map[string]interface{}{
+			"value":       event.Data["Amount"],
+			"sender":      event.Data["From"],
+			"feeInWei":    event.Data["FeeInWei"],
+			"blockNumber": event.Data["BlockNumber"],
+			"txHash":      event.Data["TransactionHash"],
+			"timestamp":   event.Data["Timestamp"],
+		})
 	}
 
 }

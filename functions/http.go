@@ -86,9 +86,9 @@ func HTTPRequest(params FunctionParams) (FunctionResponse, FunctionError) {
 	return FunctionResponse{
 		FunctionName: params.FunctionName,
 		Value: map[string]interface{}{
-			"statusCode":      resp.StatusCode,
-			"responseHeaders": resp.Header,
-			"body":            respBodyJSON,
+			"status_code":      resp.StatusCode,
+			"response_headers": resp.Header,
+			"response_body":    respBodyJSON,
 		},
 		Parameters: params.Parameters,
 	}, FunctionError{}
