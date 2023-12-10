@@ -6,11 +6,13 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"math/big"
 	"strings"
 
-	"github.com/ethereum/go-ethereum"
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 	"github.com/ethereum/go-ethereum/common"
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 )
 
@@ -349,9 +351,9 @@ var ChainlinkCCIPAbi = `[
 // const infuraURL = "wss://sepolia.infura.io/ws/v3/927b0bef549145fba75661d347f23b8a"
 
 type CCIPTransferInfo struct {
-	amount string
-	address string
-	senderChainId string
+	amount int64
+	receiverAddress string
+	tokenAddress string
 	receiverChainId string
 	useLink bool
 }
@@ -375,64 +377,57 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 	sendContractAddr := ""
 
 	contractAddress := common.HexToAddress(sendContractAddr)
-	parsedABI, err := abi.JSON(strings.NewReader(ChainlinkCCIPAbi))
+	contractAbi, err := abi.JSON(strings.NewReader(ChainlinkCCIPAbi))
 	// fmt.Printf("Parsed ABI: %v", parsedABI)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse contract ABI: %v", err)
 	}
+	destinationChainSelector := ccipInfo.receiverChainId // Replace with your value
+	receiver := common.HexToAddress(ccipInfo.receiverAddress)
+	tokenAddress := common.HexToAddress(ccipInfo.tokenAddress)
+	amount := big.NewInt(ccipInfo.amount) // Replace with the desired amount
 
-
-	instance, err := store.NewStore(address, client)
-	
-
-	// Load the contract instance
-	contractInstance, err := NewContract(contractAddress, client)
+	input, err := contractAbi.Pack("transferTokensPayLINK", destinationChainSelector, receiver, tokenAddress, amount)
 	if err != nil {
-		log.Fatalf("Failed to instantiate contract: %v", err)
+		log.Fatalf("Failed to encode function call: %v", err)
 	}
 
+	// Replace with your sender address and private key
+	senderAddress := common.HexToAddress("SENDER_ADDRESS")
+	privateKey := "YOUR_PRIVATE_KEY"
 
-	if (ccipInfo.useLink){
-		query := ethereum.CallMsg{
-			To:   &contractAddress,
-			Data: parsedABI.Methods["transferTokensPayLINK"].ID,
-			// ---- params ---- 
-			// uint64 _destinationChainSelector,
-			// address _receiver,
-			// address _token,
-			// uint256 _amount
-		}
-	} else {
-		query := ethereum.CallMsg{
-			To:   &contractAddress,
-			Data: parsedABI.Methods["transferTokensPayNative"].ID,
-			// ---- params ---- 
-			// uint64 _destinationChainSelector,
-			// address _receiver,
-			// address _token,
-			// uint256 _amount
-		}
-	}
-
-	
-
-	result, err := client.CallContract(context.Background(), query, nil)
+	// Create the transaction
+	nonce, err := client.PendingNonceAt(context.Background(), senderAddress)
 	if err != nil {
-		return nil, fmt.Errorf("failed to call contract: %v", err)
+		log.Fatalf("Failed to get nonce: %v", err)
 	}
-	// log result
-	// log.Printf("Result: %v", result)
 
-	// var answer big.Int
-	var data, _ = parsedABI.Unpack("latestRoundData", result)
-	log.Printf("Data: %v", data)
-	var answer2 ChainlinkLatestRoundData
-	err = parsedABI.UnpackIntoInterface(&answer2, "latestRoundData", result)
+	gasPrice, err := client.SuggestGasPrice(context.Background())
 	if err != nil {
-		return nil, fmt.Errorf("failed to unpack contract result: %v", err)
+		log.Fatalf("Failed to get gas price: %v", err)
 	}
 
-	return &answer2, nil
+	auth,err := bind.NewKeyedTransactorWithChainID (privateKey, big.NewInt(3))
+	auth.Nonce = big.NewInt(int64(nonce))
+	auth.Value = big.NewInt(0)
+	auth.GasLimit = uint64(300000)
+	auth.GasPrice = gasPrice
+
+	tx := types.NewTransaction(nonce, contractAddress, big.NewInt(0), uint64(300000), gasPrice, input)
+
+	signedTx, err := types.SignTx(tx, types.HomesteadSigner{}, privateKey)
+	if err != nil {
+		log.Fatalf("Failed to sign transaction: %v", err)
+	}
+
+	err = client.SendTransaction(context.Background(), signedTx)
+	if err != nil {
+		log.Fatalf("Failed to send transaction: %v", err)
+	}
+
+	fmt.Printf("Transaction sent: %s\n", signedTx.Hash().Hex())
+
+
 }
 
 // func main() {
