@@ -354,9 +354,9 @@ var ChainlinkCCIPAbi = `[
 // const infuraURL = "wss://sepolia.infura.io/ws/v3/927b0bef549145fba75661d347f23b8a"
 
 type CCIPTransferInfo struct {
-	amount int64
-	receiverAddress string
-	tokenAddress string
+	amount          string
+	address         string
+	senderChainId   string
 	receiverChainId string
 	useLink bool
 	chainId int
@@ -461,4 +461,19 @@ return nil,nil;
 // func main() {
 // 	trigger := &ChainlinkPriceFeed{}
 // 	trigger.run()
+// 	var resp, err = transferToken(
+// 		CCIPTransferInfo{
+// 			amount:          "1000000000000000000",
+// 			address:         "0x0",
+// 			senderChainId:   "0x0",
+// 			receiverChainId: "0x0",
+// 			useLink:         false,
+// 		},
+// 	)
+
+// 	if err != nil {
+// 		log.Fatalf("Error: %v", err)
+// 	}
+
+// 	log.Printf("Response: %v", resp.messageId)
 // }

@@ -15,9 +15,10 @@ import (
 
 func CallFunc(functionName string, param FunctionParams) (FunctionResponse, FunctionError) {
 	var maps = map[string]func(_param FunctionParams) (FunctionResponse, FunctionError){
-		"Transfer":          Transfer,
+		"send-crypto":          Transfer,
 		"send-http-request": HTTPRequest,
 		"send-email":        SendEmail,
+		"chat-gpt":          ChatGpt,
 	}
 
 	if val, ok := maps[functionName]; ok {
@@ -43,12 +44,12 @@ func ConvertDBParamsToFunctionParams(
 		case "string":
 			params.Parameters[param.Name] = replacePlaceholders(param.Value.(string), ValuesMap)
 		case "account":
-			var accountID = string(param.Value.(primitive.ObjectID).Hex())
+			var accountID = string(param.Value.(string))
 			var accountIDMongo, _ = primitive.ObjectIDFromHex(accountID)
 			var resolvedAccount, _ = database.GetAccount(accountIDMongo)
 			params.Parameters[param.Name] = ConvertDBParamsToFunctionParams(resolvedAccount.Parameters, functionName, triggerValue, []database.StepRun{})
-			fmt.Println("resolvedAccount: ", resolvedAccount)
-			fmt.Println("Param", param)
+			// fmt.Println("resolvedAccount: ", resolvedAccount)
+			// fmt.Println("Param", param)
 		default:
 			params.Parameters[param.Name] = param.Value
 		}
