@@ -355,9 +355,9 @@ var ChainlinkCCIPAbi = `[
 // const infuraURL = "wss://sepolia.infura.io/ws/v3/927b0bef549145fba75661d347f23b8a"
 
 type CCIPTransferInfo struct {
-	amount          int64
+	amount          big.Int
 	receiverAddress string
-	destinationChainSelector int
+	destinationChainSelector string
 	useLink bool
 	tokenAddress string
 	chainId int
@@ -401,7 +401,7 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 	destinationChainSelector := ccipInfo.destinationChainSelector // Replace with your value
 	receiver := common.HexToAddress(ccipInfo.receiverAddress)
 	tokenAddress := common.HexToAddress(ccipInfo.tokenAddress)
-	amount := big.NewInt(ccipInfo.amount) // Replace with the desired amount
+	amount := ccipInfo.amount // Replace with the desired amount
 
 
 	var input []byte
@@ -455,18 +455,24 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 
 	fmt.Printf("Transaction sent: %s\n", signedTx.Hash().Hex())
 
-return nil,nil;
+return &CCIPResponse{msg: "transfer successful"},nil;
 }
 
 // func main() {
 // 	trigger := &ChainlinkPriceFeed{}
 // 	trigger.run()
+// 	var bigIntValue big.Int
+// 	_, success := bigIntValue.SetString("10000000000000000000", 10) // 10 represents the base (decimal in this case)
+
 // 	var resp, err = transferToken(
 // 		CCIPTransferInfo{
-// 			amount:          "1000000000000000000",
-// 			address:         "0x0",
-// 			senderChainId:   "0x0",
-// 			receiverChainId: "0x0",
+// 			amount:   success,
+// 			receiverAddress: "0x",
+// 			destinationChainSelector: "",
+// 			tokenAddress: "0x",
+
+// 			chainId: 80001,
+			
 // 			useLink:         false,
 // 		},
 // 	)
