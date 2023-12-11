@@ -410,7 +410,7 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 		input, err := contractAbi.Pack("transferTokensPayLINK", destinationChainSelector, receiver, tokenAddress, amount)
 
 	}else {
-		input, err := contractAbi.Pack("transferTokensPayLINK", destinationChainSelector, receiver, tokenAddress, amount)
+		input, err := contractAbi.Pack("transferTokensPayNative", destinationChainSelector, receiver, tokenAddress, amount)
 	}
 	if err != nil {
 		log.Fatalf("Failed to encode function call: %v", err)
