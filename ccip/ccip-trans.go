@@ -403,8 +403,8 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 	amount := big.NewInt(ccipInfo.amount) // Replace with the desired amount
 
 
-	var input []byte;
-	var err error;
+	var input []byte
+	var err error
 
 	if ccipInfo.useLink {
 		input, err := contractAbi.Pack("transferTokensPayLINK", destinationChainSelector, receiver, tokenAddress, amount)
@@ -412,6 +412,7 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 	}else {
 		input, err := contractAbi.Pack("transferTokensPayNative", destinationChainSelector, receiver, tokenAddress, amount)
 	}
+	
 	if err != nil {
 		log.Fatalf("Failed to encode function call: %v", err)
 	}
