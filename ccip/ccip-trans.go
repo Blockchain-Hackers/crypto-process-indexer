@@ -406,7 +406,7 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 	var input []byte;
 	var err error;
 
-	if(ccipInfo.useLink){
+	if ccipInfo.useLink {
 		input, err := contractAbi.Pack("transferTokensPayLINK", destinationChainSelector, receiver, tokenAddress, amount)
 
 	}else {
