@@ -23,7 +23,7 @@ import (
 //	}
 func SendEmail(params FunctionParams) (FunctionResponse, FunctionError) {
 	// Validate required parameters
-	requiredParams := []string{"apiKey", "to", "subject", "body", "domain", "sender"}
+	requiredParams := []string{"account", "to", "subject", "body", "domain", "sender"}
 	for _, param := range requiredParams {
 		if _, ok := params.Parameters[param]; !ok {
 			return FunctionResponse{}, FunctionError{
@@ -34,7 +34,9 @@ func SendEmail(params FunctionParams) (FunctionResponse, FunctionError) {
 	}
 
 	// Extract email parameters from the FunctionParams struct
-	apiKey := params.Parameters["apiKey"].(string)
+fmt.Println("account", params.Parameters["account"])
+	// account is of Type FunctionParam, so we need to extract the apiKey from it
+	apiKey := params.Parameters["account"].(FunctionParams).Parameters["apiKey"].(string)
 	to := params.Parameters["to"].(string)
 	subject := params.Parameters["subject"].(string)
 	body := params.Parameters["body"].(string)

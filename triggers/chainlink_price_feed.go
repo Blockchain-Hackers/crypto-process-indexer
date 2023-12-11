@@ -148,8 +148,8 @@ func getLatestPrice(pair string) (*ChainlinkLatestRoundData, error) {
 	// log.Printf("Result: %v", result)
 
 	// var answer big.Int
-	var data, _ = parsedABI.Unpack("latestRoundData", result)
-	log.Printf("Data: %v", data)
+	// var data, _ = parsedABI.Unpack("latestRoundData", result)
+	// log.Printf("Data: %v", data)
 	var answer2 ChainlinkLatestRoundData
 	err = parsedABI.UnpackIntoInterface(&answer2, "latestRoundData", result)
 	if err != nil {

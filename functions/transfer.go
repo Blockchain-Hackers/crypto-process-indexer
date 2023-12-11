@@ -5,6 +5,7 @@ import (
 	"crypto/ecdsa"
 	"fmt"
 	"math/big"
+	"strconv"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -14,7 +15,7 @@ import (
 
 func Transfer(params FunctionParams) (FunctionResponse, FunctionError) {
 	const infuraURL = "https://sepolia.infura.io/v3/927b0bef549145fba75661d347f23b8a"
-	requiredParams := []string{"amount", "privateKey", "to"}
+	requiredParams := []string{"amount", "account", "recipient"}
 	for _, param := range requiredParams {
 		if _, ok := params.Parameters[param]; !ok {
 			return FunctionResponse{}, FunctionError{
@@ -25,9 +26,10 @@ func Transfer(params FunctionParams) (FunctionResponse, FunctionError) {
 	}
 
 	// get the amount, to, and private key from the params
-	amount := params.Parameters["amount"].(int64)
-	to := params.Parameters["to"].(string)
-	privateKey := params.Parameters["privateKey"].(string)
+	amount := params.Parameters["amount"].(string)
+	to := params.Parameters["recipient"].(string)
+	// privateKey := params.Parameters["privateKey"].(string)
+	privateKey := params.Parameters["account"].(FunctionParams).Parameters["privateKey"].(string)
 
 	// create a new client
 	client, err := ethclient.DialContext(context.Background(), infuraURL)
@@ -73,10 +75,10 @@ func Transfer(params FunctionParams) (FunctionResponse, FunctionError) {
 			Message:      err.Error(),
 		}
 	}
-
+	var intAmount, _ = strconv.Atoi(amount)
 	tx := types.NewTransaction(nonce, common.HexToAddress(to), big.NewInt(
-		// int64(amount*1e18)
-		amount,
+		int64(intAmount),
+		// amount,
 	), 2100000, gasPrice, nil)
 
 	// Sign the transaction
@@ -95,8 +97,6 @@ func Transfer(params FunctionParams) (FunctionResponse, FunctionError) {
 			Message:      err.Error(),
 		}
 	}
-
-	
 
 	err = client.SendTransaction(context.Background(), signedTx)
 	if err != nil {

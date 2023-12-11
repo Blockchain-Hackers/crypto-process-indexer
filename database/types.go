@@ -56,12 +56,24 @@ type FlowRun struct {
 }
 
 type StepRun struct {
-	Name       string      `bson:"name,omitempty"`
-	Parameters []Parameter `bson:"parameters,omitempty"`
-	Function   string      `bson:"function,omitempty"`
-	Logs       string      `bson:"logs,omitempty"`
-	Success    bool        `bson:"success"`
-	Message    string      `bson:"message,omitempty"`
-	Value     map[string] interface{} `bson:"output,omitempty"`
-	ID  primitive.ObjectID `bson:"_id,omitempty"`
+	Name       string                 `bson:"name,omitempty"`
+	Parameters []Parameter            `bson:"parameters,omitempty"`
+	Function   string                 `bson:"function,omitempty"`
+	Logs       string                 `bson:"logs,omitempty"`
+	Success    bool                   `bson:"success"`
+	Message    string                 `bson:"message,omitempty"`
+	Value      map[string]interface{} `bson:"output,omitempty"`
+	ID         primitive.ObjectID     `bson:"_id,omitempty"`
+}
+
+type Account struct {
+	ID          primitive.ObjectID `bson:"_id,omitempty"`
+	Name        string             `json:"name"`
+	AccountType primitive.ObjectID `json:"account_type"`
+	Type        string             `json:"type"`
+	UserID      primitive.ObjectID `json:"user_id"`
+	Parameters  []Parameter        `json:"parameters"`
+	CreatedAt   time.Time          `json:"created_at"`
+	UpdatedAt   time.Time          `json:"updated_at"`
+	V           int                `json:"__v"`
 }
