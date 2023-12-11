@@ -4,13 +4,16 @@ package triggers
 
 import (
 	"context"
+	"crypto/ecdsa"
+	"crypto/elliptic"
+	"encoding/hex"
 	"fmt"
 	"log"
 	"math/big"
 	"strings"
-
-	"github.com/ethereum/go-ethereum/accounts/abi"
 	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+	"github.com/ethereum/go-ethereum/accounts/abi"
+
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
@@ -359,6 +362,18 @@ type CCIPTransferInfo struct {
 	chainId int
 }
 
+func stringToPrivateKey(s string) (*ecdsa.PrivateKey, error) {
+	keyBytes, err := hex.DecodeString(s)
+	if err != nil {
+		return nil, err
+	}
+
+	key := new(ecdsa.PrivateKey)
+	key.PublicKey.Curve = elliptic.P256() // Assuming P256 curve for Ethereum
+	key.D = new(big.Int).SetBytes(keyBytes)
+
+	return key, nil
+}
 
 
 type CCIPResponse struct {
@@ -387,14 +402,26 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 	tokenAddress := common.HexToAddress(ccipInfo.tokenAddress)
 	amount := big.NewInt(ccipInfo.amount) // Replace with the desired amount
 
-	input, err := contractAbi.Pack("transferTokensPayLINK", destinationChainSelector, receiver, tokenAddress, amount)
+
+	var input []byte;
+	var err error;
+
+	if(ccipInfo.useLink){
+		input, err := contractAbi.Pack("transferTokensPayLINK", destinationChainSelector, receiver, tokenAddress, amount)
+
+	}else {
+		input, err := contractAbi.Pack("transferTokensPayLINK", destinationChainSelector, receiver, tokenAddress, amount)
+	}
 	if err != nil {
 		log.Fatalf("Failed to encode function call: %v", err)
 	}
 
 	// Replace with your sender address and private key
 	senderAddress := common.HexToAddress("SENDER_ADDRESS")
-	privateKey := "YOUR_PRIVATE_KEY"
+	privateKey,err := stringToPrivateKey("YOUR_PRIVATE_KEY")
+	if err != nil {
+		log.Fatalf("Failed to get account: %v", err)
+	}
 
 	// Create the transaction
 	nonce, err := client.PendingNonceAt(context.Background(), senderAddress)
