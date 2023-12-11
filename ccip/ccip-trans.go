@@ -355,11 +355,11 @@ var ChainlinkCCIPAbi = `[
 // const infuraURL = "wss://sepolia.infura.io/ws/v3/927b0bef549145fba75661d347f23b8a"
 
 type CCIPTransferInfo struct {
-	amount          string
-	address         string
-	senderChainId   string
-	receiverChainId string
+	amount          int64
+	receiverAddress string
+	destinationChainSelector int
 	useLink bool
+	tokenAddress string
 	chainId int
 }
 
@@ -398,7 +398,7 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse contract ABI: %v", err)
 	}
-	destinationChainSelector := ccipInfo.receiverChainId // Replace with your value
+	destinationChainSelector := ccipInfo.destinationChainSelector // Replace with your value
 	receiver := common.HexToAddress(ccipInfo.receiverAddress)
 	tokenAddress := common.HexToAddress(ccipInfo.tokenAddress)
 	amount := big.NewInt(ccipInfo.amount) // Replace with the desired amount
