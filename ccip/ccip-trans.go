@@ -11,8 +11,9 @@ import (
 	"log"
 	"math/big"
 	"strings"
-	"github.com/ethereum/go-ethereum/accounts/abi/bind"
+
 	"github.com/ethereum/go-ethereum/accounts/abi"
+	"github.com/ethereum/go-ethereum/accounts/abi/bind"
 
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/core/types"
@@ -404,13 +405,12 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 
 
 	var input []byte
-	var err error
 
 	if ccipInfo.useLink {
-		input, err := contractAbi.Pack("transferTokensPayLINK", destinationChainSelector, receiver, tokenAddress, amount)
+		input, err = contractAbi.Pack("transferTokensPayLINK", destinationChainSelector, receiver, tokenAddress, amount)
 
 	}else {
-		input, err := contractAbi.Pack("transferTokensPayNative", destinationChainSelector, receiver, tokenAddress, amount)
+		input, err = contractAbi.Pack("transferTokensPayNative", destinationChainSelector, receiver, tokenAddress, amount)
 	}
 	
 	if err != nil {
