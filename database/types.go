@@ -20,6 +20,7 @@ type Parameter struct {
 	Name  string      `bson:"name,omitempty"`
 	Value interface{} `bson:"value,omitempty"`
 	Type  string      `bson:"type,omitempty"`
+	ID   primitive.ObjectID `bson:"_id,omitempty"`
 }
 
 // Trigger represents the trigger information.

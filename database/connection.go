@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"os"
 
+	"github.com/Azure/azure-sdk-for-go/sdk/azidentity"
+	"github.com/Azure/azure-sdk-for-go/sdk/keyvault/azsecrets"
 	"github.com/joho/godotenv"
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -112,6 +114,37 @@ func GetAccount(ID primitive.ObjectID) (Account, error) {
 	}).Decode(&account)
 	if err != nil {
 		return Account{}, err
+	}
+
+	// for accounts we need to get all param values from azure vault
+	vaultURI := os.Getenv("AZURE_KEY_VAULT_URI")
+	cred, _ := azidentity.NewDefaultAzureCredential(nil)
+	client, _ := azsecrets.NewClient(vaultURI, cred, nil)
+
+	params := account.Parameters
+	for i, param := range params {
+		// key is accounts-id-parameters-name
+		// value is the value of the secret
+		// `accounts-${id}-${name}`;
+		secretName := fmt.Sprintf("accounts-%s-%s", ID.Hex(), param.Name)
+		version := ""
+		resp, err := client.GetSecret(context.TODO(), secretName, version, nil)
+		if err != nil {
+			fmt.Printf("failed to get the secret: %v", err)
+		}
+		param.Value = *resp.Value
+		fmt.Println("value from vault", *resp.Value)
+		// we have to decode the value using the encryption key and iv
+		decryptedValue, _err := GetAESDecrypted(param.Value.(string), os.Getenv("ENCRYPTION_KEY"), os.Getenv("IV_KEY"))
+		if _err != nil {
+			param.Value = nil
+		} else {
+			param.Value = decryptedValue.Result
+		}
+
+		fmt.Println(param.Name, param.Value)
+		// set the param in the account
+		account.Parameters[i] = param
 	}
 	return account, nil
 }

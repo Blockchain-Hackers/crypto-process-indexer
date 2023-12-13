@@ -33,7 +33,8 @@ func ConvertDBParamsToFunctionParams(
 	dbParams []database.Parameter,
 	functionName string,
 	triggerValue map[string]interface{},
-	steps []database.StepRun) FunctionParams {
+	steps []database.StepRun,
+	) FunctionParams {
 	var ValuesMap = constructMap(triggerValue, steps)
 	// now construct a s
 	params := FunctionParams{
