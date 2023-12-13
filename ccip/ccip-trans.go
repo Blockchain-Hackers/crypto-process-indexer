@@ -356,11 +356,12 @@ var ChainlinkCCIPAbi = `[
 
 type CCIPTransferInfo struct {
 	amount          big.Int
-	receiverAddress string
+	receiverAddress common.Address
 	destinationChainSelector string
 	useLink bool
-	tokenAddress string
+	tokenAddress common.Address
 	chainId int
+	CCIPcontractAddr common.Address
 }
 
 func stringToPrivateKey(s string) (*ecdsa.PrivateKey, error) {
@@ -391,16 +392,15 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 	}
 	defer client.Close()
 
-	sendContractAddr := ""
 
-	contractAddress := common.HexToAddress(sendContractAddr)
+	contractAddress := ccipInfo.CCIPcontractAddr
 	contractAbi, err := abi.JSON(strings.NewReader(ChainlinkCCIPAbi))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse contract ABI: %v", err)
 	}
 	destinationChainSelector := ccipInfo.destinationChainSelector // Replace with your value
-	receiver := common.HexToAddress(ccipInfo.receiverAddress)
-	tokenAddress := common.HexToAddress(ccipInfo.tokenAddress)
+	receiver := ccipInfo.receiverAddress
+	tokenAddress := ccipInfo.tokenAddress
 	amount := ccipInfo.amount // Replace with the desired amount
 
 
@@ -458,28 +458,25 @@ func transferToken(ccipInfo CCIPTransferInfo) (*CCIPResponse, error) {
 return &CCIPResponse{msg: "transfer successful"},nil;
 }
 
-// func main() {
-// 	trigger := &ChainlinkPriceFeed{}
-// 	trigger.run()
-// 	var bigIntValue big.Int
-// 	_, success := bigIntValue.SetString("10000000000000000000", 10) // 10 represents the base (decimal in this case)
+func main() {
+	// from mumbai to sepolia example
+	var amount big.Int
+	amount.SetString("1000000000000000", 10)
+	var resp, err = transferToken(
+		CCIPTransferInfo{
+			amount:   amount,
+			receiverAddress: common.HexToAddress("0x21433DfFAC74BBd1822D44cCC673FDCA1EC6A79B"),
+			destinationChainSelector: "16015286601757825753",
+			tokenAddress: common.HexToAddress("0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889"), // WETH
+			CCIPcontractAddr: common.HexToAddress("???"),
+			chainId: 80001,
+			useLink: false,
+		},
+	)
 
-// 	var resp, err = transferToken(
-// 		CCIPTransferInfo{
-// 			amount:   success,
-// 			receiverAddress: "0x",
-// 			destinationChainSelector: "",
-// 			tokenAddress: "0x",
+	if err != nil {
+		log.Fatalf("Error: %v", err)
+	}
 
-// 			chainId: 80001,
-			
-// 			useLink:         false,
-// 		},
-// 	)
-
-// 	if err != nil {
-// 		log.Fatalf("Error: %v", err)
-// 	}
-
-// 	log.Printf("Response: %v", resp.messageId)
-// }
+	log.Printf("Response: %v", resp)
+}
