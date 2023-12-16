@@ -135,6 +135,8 @@ func GetAccount(ID primitive.ObjectID) (Account, error) {
 		param.Value = *resp.Value
 		fmt.Println("value from vault", *resp.Value)
 		// we have to decode the value using the encryption key and iv
+		fmt.Println("ENCRYPTION_KEY", os.Getenv("ENCRYPTION_KEY"))
+		fmt.Println("IV_KEY", os.Getenv("IV_KEY"))
 		decryptedValue, _err := GetAESDecrypted(param.Value.(string), os.Getenv("ENCRYPTION_KEY"), os.Getenv("IV_KEY"))
 		if _err != nil {
 			param.Value = nil
