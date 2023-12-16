@@ -133,7 +133,7 @@ func GetAccount(ID primitive.ObjectID) (Account, error) {
 			fmt.Printf("failed to get the secret: %v", err)
 		}
 		param.Value = *resp.Value
-		// fmt.Println("value from vault", *resp.Value)
+		fmt.Println("value from vault", *resp.Value)
 		// we have to decode the value using the encryption key and iv
 		decryptedValue, _err := GetAESDecrypted(param.Value.(string), os.Getenv("ENCRYPTION_KEY"), os.Getenv("IV_KEY"))
 		if _err != nil {
@@ -142,7 +142,7 @@ func GetAccount(ID primitive.ObjectID) (Account, error) {
 			param.Value = decryptedValue.Result
 		}
 
-		// fmt.Println(param.Name, param.Value)
+		fmt.Println(param.Name, param.Value)
 		// set the param in the account
 		account.Parameters[i] = param
 	}
