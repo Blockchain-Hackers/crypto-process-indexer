@@ -58,8 +58,8 @@ const transferTokens = async (args) => {
     privateKey,
   } = args;
 
-  console.log("sourceChain", sourceChain);
-  console.log("args", args);
+  // console.log("sourceChain", sourceChain);
+  // console.log("args", args);
 
   /* 
   ==================================================

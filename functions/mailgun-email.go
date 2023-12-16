@@ -34,7 +34,7 @@ func SendEmail(params FunctionParams) (FunctionResponse, FunctionError) {
 	}
 
 	// Extract email parameters from the FunctionParams struct
-fmt.Println("account", params.Parameters["account"])
+	// fmt.Println("account", params.Parameters["account"])
 	// account is of Type FunctionParam, so we need to extract the apiKey from it
 	apiKey := params.Parameters["account"].(FunctionParams).Parameters["apiKey"].(string)
 	to := params.Parameters["to"].(string)

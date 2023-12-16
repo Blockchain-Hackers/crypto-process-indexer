@@ -4,7 +4,7 @@ package triggers
 
 import (
 	"context"
-	"encoding/json"
+	// "encoding/json"
 	"fmt"
 	"log"
 	"math/big"
@@ -91,8 +91,8 @@ func (trigger *ChainlinkPriceFeed) run() {
 				continue
 			}
 			// price.
-			var val, _ = json.Marshal(price)
-			log.Printf("Latest price of %s: %s", pair, val)
+			// var val, _ = json.Marshal(price)
+			// log.Printf("Latest price of %s: %s", pair, val)
 			// wait for 15 seconds
 			go func(pair string, price *ChainlinkLatestRoundData) {
 				var decimals int64 = 100000000
@@ -229,6 +229,9 @@ func (trigger *ChainlinkPriceFeed) processEvent(event Event) {
 	}
 	for _, filter := range []bson.M{filter1, filter2, filter3, filter4, filter5} {
 		var flows = database.FindFlows(filter)
+		if(len(flows) == 0) {
+			continue
+		}
 		fmt.Printf("Found %d flows\n", len(flows))
 
 		for _, flow := range flows {

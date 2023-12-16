@@ -53,7 +53,7 @@ app.post("/ccip", (req, res) => {
       .pattern(/^0x[a-fA-F0-9]{40}$/), // Ethereum address pattern
     amount: Joi.string().required(),
     privateKey: Joi.string().required(),
-    feeTokenAddress: Joi.string().allow(null).required(),
+    feeTokenAddress: Joi.string().allow(null).allow("").required(),
   });
 
   const { error, value } = schema.validate(req.body);
@@ -66,7 +66,7 @@ app.post("/ccip", (req, res) => {
     });
   }
 
-  console.log(value);
+//   console.log(value);
 
   // get validated data from request body
   const {

@@ -19,6 +19,7 @@ func CallFunc(functionName string, param FunctionParams) (FunctionResponse, Func
 		"send-http-request": HTTPRequest,
 		"send-email":        SendEmail,
 		"chat-gpt":          ChatGpt,
+		"ccip":              CCIP,
 	}
 
 	if val, ok := maps[functionName]; ok {
