@@ -36,8 +36,6 @@ const handleArguments = () => {
   // native
   // node src/transfer-tokens.js ethereumSepolia polygonMumbai 0x9d087fC03ae39b088326b67fA3C788236645b717 0xFd57b4ddBf88a4e07fF4e34C487b99af2Fe82a05 1000000000000000 0xdfe59eb3c16344e2d1daeda3611ba43116926ad4c753ab046b855fcfac883e4c
 
-
-
   return {
     sourceChain,
     destinationChain,
@@ -49,7 +47,7 @@ const handleArguments = () => {
   };
 };
 
-const transferTokens = async () => {
+const transferTokens = async (args) => {
   const {
     sourceChain,
     destinationChain,
@@ -58,7 +56,10 @@ const transferTokens = async () => {
     amount,
     feeTokenAddress,
     privateKey,
-  } = handleArguments();
+  } = args;
+
+  console.log("sourceChain", sourceChain);
+  console.log("args", args);
 
   /* 
   ==================================================
@@ -156,7 +157,9 @@ const transferTokens = async () => {
   ==================================================
   */
 
-  const fees = await sourceRouter.getFee(destinationChainSelector, message);
+  // const fees = await sourceRouter.getFee(destinationChainSelector, message);
+  
+  const fees = 8220672353649032; // 0.000220672353649032 ETH
   console.log(`Estimated fees (wei): ${fees}`);
 
   /* 
@@ -328,7 +331,11 @@ const transferTokens = async () => {
   }, TIMEOUT);
 };
 
-transferTokens().catch((e) => {
-  console.error(e);
-  process.exit(1);
-});
+// transferTokens(handleArguments()).catch((e) => {
+//   console.error(e);
+//   process.exit(1);
+// });
+
+module.exports = {
+  transferTokens,
+};

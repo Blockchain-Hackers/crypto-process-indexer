@@ -4,13 +4,17 @@
   "description": "provide typescript examples of interacting with Chainlink CCIP from your EOA",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "node src/index.js",
+    "start": "node src/index.js"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@chainlink/env-enc": "^1.0.5",
     "dotenv": "^16.3.1",
-    "ethers": "^5.7.2"
+    "ethers": "^5.7.2",
+    "express": "^4.18.2",
+    "joi": "^17.11.0"
   }
 }
