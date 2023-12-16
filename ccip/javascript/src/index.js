@@ -53,8 +53,7 @@ app.post("/ccip", (req, res) => {
       .pattern(/^0x[a-fA-F0-9]{40}$/), // Ethereum address pattern
     amount: Joi.string().required(),
     privateKey: Joi.string().required(),
-    feeTokenAddress: Joi.string().required(),
-    isNative: Joi.boolean().required(),
+    feeTokenAddress: Joi.string().allow(null).required(),
   });
 
   const { error, value } = schema.validate(req.body);
@@ -78,7 +77,6 @@ app.post("/ccip", (req, res) => {
     amount,
     privateKey,
     feeTokenAddress,
-    isNative,
   } = req.body;
 
   // transfer tokens
@@ -92,7 +90,6 @@ app.post("/ccip", (req, res) => {
     amount,
     privateKey,
     feeTokenAddress,
-    isNative,
   })
     .then((result) => {
       return res.status(200).json({
@@ -102,7 +99,6 @@ app.post("/ccip", (req, res) => {
       });
     })
     .catch((error) => {
-      console.log(error);
       return res.status(400).json({
         error: error.message,
         status: false,

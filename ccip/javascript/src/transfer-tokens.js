@@ -158,7 +158,7 @@ const transferTokens = async (args) => {
   */
 
   // const fees = await sourceRouter.getFee(destinationChainSelector, message);
-  
+
   const fees = 8220672353649032; // 0.000220672353649032 ETH
   console.log(`Estimated fees (wei): ${fees}`);
 
@@ -244,97 +244,16 @@ const transferTokens = async (args) => {
     `\n✅ ${amount} of Tokens(${tokenAddress}) Sent to account ${destinationAccount} on destination chain ${destinationChain} using CCIP. Transaction hash ${sendTx.hash} -  Message id is ${messageId}`
   );
 
-  /* 
-  ==================================================
-      Section: Check status of the destination chain
-      Poll the off-ramps contracts of the destination chain
-      to wait for the message to be executed then return
-      the status.
-  ==================================================
-  */
-
-  // Fetch status on destination chain
-  const destinationRpcUrl = getProviderRpcUrl(destinationChain);
-
-  // Initialize providers for interacting with the blockchains
-  const destinationProvider = new ethers.providers.JsonRpcProvider(
-    destinationRpcUrl
-  );
-  const destinationRouterAddress = getRouterConfig(destinationChain).address;
-
-  // Instantiate the router contract on the destination chain
-  const destinationRouterContract = new ethers.Contract(
-    destinationRouterAddress,
-    routerAbi,
-    destinationProvider
-  );
-
-  // CHECK DESTINATION CHAIN - POLL UNTIL the messageID is found or timeout
-
-  const POLLING_INTERVAL = 60000; // Poll every 60 seconds
-  const TIMEOUT = 40 * 60 * 1000; // 40 minutes in milliseconds
-
-  let pollingId;
-  let timeoutId;
-
-  const pollStatus = async () => {
-    // Fetch the OffRamp contract addresses on the destination chain
-    const offRamps = await destinationRouterContract.getOffRamps();
-
-    // Iterate through OffRamps to find the one linked to the source chain and check message status
-    for (const offRamp of offRamps) {
-      if (offRamp.sourceChainSelector.toString() === sourceChainSelector) {
-        const offRampContract = new ethers.Contract(
-          offRamp.offRamp,
-          offRampAbi,
-          destinationProvider
-        );
-        const events = await offRampContract.queryFilter(
-          "ExecutionStateChanged"
-        );
-
-        // Check if an event with the specific messageId exists and log its status
-        for (let event of events) {
-          if (event.args && event.args.messageId === messageId) {
-            const state = event.args.state;
-            const status = getMessageState(state);
-            console.log(
-              `\n✅Status of message ${messageId} is ${status} - Check the explorer https://ccip.chain.link/msg/${messageId}`
-            );
-
-            // Clear the polling and the timeout
-            clearInterval(pollingId);
-            clearTimeout(timeoutId);
-            return;
-          }
-        }
-      }
-    }
-    // If no event found, the message has not yet been processed on the destination chain
-    console.log(
-      `Message ${messageId} has not been processed yet on the destination chain.Try again in 60sec - Check the explorer https://ccip.chain.link/msg/${messageId}`
-    );
+  return {
+    amountInWei: amount,
+    destination: destinationAccount,
+    destinationChain: destinationChain,
+    sourceChain: sourceChain,
+    messageId,
+    hash: sendTx.hash,
+    chainlinkExplorerUrl: `https://ccip.chain.link/msg/${messageId}`,
   };
-
-  // Start polling
-  console.log(
-    `\nWait for message ${messageId} to be executed on the destination chain - Check the explorer https://ccip.chain.link/msg/${messageId}`
-  );
-  pollingId = setInterval(pollStatus, POLLING_INTERVAL);
-
-  // Set timeout to stop polling after 40 minutes
-  timeoutId = setTimeout(() => {
-    console.log(
-      "\nTimeout reached. Stopping polling - check again later (Run `get-status` script) Or check the explorer https://ccip.chain.link/msg/${messageId}"
-    );
-    clearInterval(pollingId);
-  }, TIMEOUT);
 };
-
-// transferTokens(handleArguments()).catch((e) => {
-//   console.error(e);
-//   process.exit(1);
-// });
 
 module.exports = {
   transferTokens,
