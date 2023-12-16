@@ -252,6 +252,7 @@ const transferTokens = async (args) => {
     messageId,
     hash: sendTx.hash,
     chainlinkExplorerUrl: `https://ccip.chain.link/msg/${messageId}`,
+    fee: sendTx.fee,
   };
 };
 
