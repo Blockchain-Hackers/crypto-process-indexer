@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/blockchain-hackers/indexer/database"
-	"go.mongodb.org/mongo-driver/bson/primitive"
+	// "go.mongodb.org/mongo-driver/bson/primitive"
 	// "go.mongodb.org/mongo-driver/bson/primitive"
 
 	// "github.com/wailsapp/wails/lib/interfaces"
@@ -23,10 +23,10 @@ func main() {
 	// dbs,_ := DBClient.ListDatabaseNames(context.Background(), bson.D{{}})
 	fmt.Printf("Database connected successfully: %+v\n", (DBClient.NumberSessionsInProgress()))
 	triggers.Run()
-	id, _ := primitive.ObjectIDFromHex("6576656fe4783994d0f6678d")
-	acc1, _ := database.GetAccount(id)
+	// id, _ := primitive.ObjectIDFromHex("6576656fe4783994d0f6678d")
+	// acc1, _ := database.GetAccount(id)
 
-	fmt.Printf("Account: %+v\n", acc1)
+	// fmt.Printf("Account: %+v\n", acc1)
 
 	// Simple HTTP server
 	http.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
